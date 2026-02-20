@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마스터 영단어 퀴즈</title>
+    <style>
+        /* CSS: 디자인 설정 (기존 파이썬 UI 색상 및 스타일 반영) */
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #2c3e50; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .app-container { width: 100%; max-width: 400px; }
+        
+        .controls { display: flex; gap: 10px; margin-bottom: 10px; }
+        select { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #bdc3c7; font-size: 14px; background-color: white; color: #8e44ad; font-weight: bold;}
+        
+        .score-board { text-align: right; font-size: 14px; color: #7f8c8d; font-weight: bold; margin-bottom: 10px; }
+        
+        .card { background-color: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; margin-bottom: 15px; border: 1px solid #dcdde1; }
+        .word-display { font-size: 32px; font-weight: bold; margin-bottom: 20px; word-break: keep-all; }
+        
+        .btn-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
+        button { cursor: pointer; border: none; border-radius: 8px; padding: 10px 15px; font-size: 14px; font-weight: bold; transition: 0.2s; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        .btn-speak { background-color: #e0f7fa; color: #0984e3; }
+        .btn-save { background-color: #fff3e0; color: #f39c12; }
+        
+        .feedback { text-align: center; font-size: 18px; font-weight: bold; min-height: 25px; margin-bottom: 10px; }
+        
+        .example-area { background-color: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 13px; color: #34495e; text-align: left; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #eee;}
+        .example-text { flex: 1; line-height: 1.4;}
+        .example-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-icon { background: #ecf0f1; font-size: 18px; padding: 8px 12px; border-radius: 50%; }
+        
+        .options { display: flex; flex-direction: column; gap: 10px; }
+        .btn-option { background-color: white; border: 1px solid #bdc3c7; padding: 15px; font-size: 16px; color: #2f3640; border-radius: 10px; }
+        .btn-option:hover:not(:disabled) { background-color: #ecf0f1; }
+        .btn-option.correct { background-color: #badc58 !important; color: white; border-color: #badc58; }
+        .btn-option.wrong { background-color: #ff7979 !important; color: white; border-color: #ff7979; }
+        
+        .btn-next { background-color: #2ecc71; color: white; width: 100%; padding: 15px; font-size: 18px; border-radius: 10px; margin-top: 15px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="controls">
+        <select id="daySelect">
+            <option value="전체 랜덤">전체 랜덤</option>
+            <option value="DAY 16">DAY 16</option>
+            <option value="DAY 17">DAY 17</option>
+            <option value="DAY 18">DAY 18</option>
+            <option value="DAY 19">DAY 19</option>
+        </select>
+        <select id="modeSelect">
+            <option value="en2ko">영어 ➔ 한글</option>
+            <option value="ko2en">한글 ➔ 영어</option>
+        </select>
+    </div>
+
+    <div class="score-board" id="scoreBoard">Score: 0 | Total: 0 words</div>
+
+    <div class="card">
+        <div class="word-display" id="questionLabel">Loading...</div>
+        <div class="btn-group">
+            <button class="btn-speak" id="speakBtn">🔊 단어 듣기</button>
+            <button class="btn-save" id="saveBtn">⭐ 오답 저장</button>
+        </div>
+    </div>
+
+    <div class="feedback" id="feedbackLabel"></div>
+    
+    <div class="example-area" id="exampleArea" style="display: none;">
+        <div class="example-text" id="exampleText"></div>
+        <div class="example-actions">
+            <button class="btn-icon" id="speakExBtn" title="예문 듣기">🗣</button>
+            <button class="btn-icon" id="shadowBtn" title="쉐도잉 (마이크)">🎙</button>
+        </div>
+    </div>
+
+    <div class="options" id="optionsContainer">
+        <button class="btn-option" onclick="checkAnswer(this)"></button>
+        <button class="btn-option" onclick="checkAnswer(this)"></button>
+        <button class="btn-option" onclick="checkAnswer(this)"></button>
+        <button class="btn-option" onclick="checkAnswer(this)"></button>
+    </div>
+
+    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">다음 문제 ➔</button>
+</div>
+
+<script>
+    // 1. 단어 데이터 세팅 (Python의 VOCAB_LIST 와 동일)
+    const VOCAB_LIST = [
+        ["DAY 19", "modern", "현대의, 최신의"], ["DAY 19", "mobile", "이동식의, 기동성의, 이동전화"], ["DAY 19", "function", "기능, 작용, 의식; 기능하다, 역할을 하다"], ["DAY 19", "machine", "기계, 장치"], ["DAY 19", "repair", "수리, 수선; 수리하다, 고치다"],
+        ["DAY 19", "efficient", "능률적인, 효율적인"], ["DAY 19", "install", "설치하다, 장착하다"], ["DAY 19", "innovation", "혁신, 쇄신"], ["DAY 19", "trust", "신뢰하다, 믿다; 신뢰, 신임"], ["DAY 19", "truth", "진실, 사실"],
+        ["DAY 19", "imagine", "상상하다, 가정하다"], ["DAY 19", "artificial", "인공의, 인위적인"], ["DAY 19", "adjust", "맞추다, 조정하다, 적응하다"], ["DAY 19", "ideal", "이상적인, 최상의; 이상향"], ["DAY 19", "gather", "모으다, 수집하다"],
+        ["DAY 19", "mechanic", "정비사, 기계공"], ["DAY 19", "portable", "휴대용의, 이동이 쉬운"], ["DAY 19", "remove", "제거하다, 치우다"], ["DAY 19", "master", "달인, 대가; 숙달하다"], ["DAY 19", "screen", "화면, 칸막이; 심사하다, 막다"],
+        ["DAY 19", "widespread", "광범위한, 널리 보급된"], ["DAY 19", "edge", "가장자리, 모서리"], ["DAY 19", "remind", "상기시키다, 생각나게 하다"], ["DAY 19", "acquire", "습득하다, 얻다"], ["DAY 19", "interact", "상호 작용하다"],
+        ["DAY 19", "scatter", "흩뿌리다, 흩어지다"], ["DAY 19", "virtual", "사실상의, 가상의"], ["DAY 19", "convert", "바꾸다, 전환하다"], ["DAY 19", "ease", "쉬움, 용이함; 덜어주다"], ["DAY 19", "erase", "지우다, 삭제하다"],
+        ["DAY 19", "navigate", "항해하다, 길을 찾다"], ["DAY 19", "reproduce", "재생하다, 번식하다"], ["DAY 19", "differ", "다르다, 구별되다"], ["DAY 19", "instruction", "지시, 설명, 사용설명서"], ["DAY 19", "significant", "중요한, 의미 있는"],
+        ["DAY 19", "satellite", "위성"], ["DAY 19", "demonstrate", "증명하다, 시연하다"], ["DAY 19", "emerge", "나타나다, 출현하다"], ["DAY 19", "trigger", "방아쇠; 유발하다"], ["DAY 19", "current", "현재의, 지금의; 흐름, 경향"],
+        ["DAY 18", "stomach", "배, 위, 복부"], ["DAY 18", "pill", "알약, 약"], ["DAY 18", "thumb", "엄지손가락"], ["DAY 18", "wound", "상처, 부상; 상처를 입히다"], ["DAY 18", "therapy", "치료, 요법"],
+        ["DAY 18", "surgery", "수술"], ["DAY 18", "physician", "의사"], ["DAY 18", "positive", "긍정적인, 확신하는"], ["DAY 18", "grab", "잡다, 움켜잡다"], ["DAY 18", "grip", "악력, 잡는 힘; 꽉 잡다"],
+        ["DAY 18", "prevent", "예방하다, 막다"], ["DAY 18", "suffer", "고통받다, 시달리다"], ["DAY 18", "ruin", "파괴하다, 망치다"], ["DAY 18", "organ", "기관, 장기"], ["DAY 18", "instead", "대신에"],
+        ["DAY 18", "ankle", "발목"], ["DAY 18", "nutrition", "영양(학), 영양분"], ["DAY 18", "decrease", "감소하다"], ["DAY 18", "trouble", "문제, 곤란"], ["DAY 18", "seal", "밀봉하다; 바다표범"],
+        ["DAY 18", "track", "자국, 흔적; 추적하다"], ["DAY 18", "perhaps", "아마도"], ["DAY 18", "bump", "부딪히다, 충돌"], ["DAY 18", "alert", "기민한, 경계하는; 경보"], ["DAY 18", "slip", "미끄러지다"],
+        ["DAY 18", "modest", "겸손한, 적당한"], ["DAY 18", "disabled", "장애가 있는"], ["DAY 18", "injure", "부상 입히다"], ["DAY 18", "rapid", "빠른, 신속한"], ["DAY 18", "spin", "회전하다"],
+        ["DAY 18", "spare", "여분의; 아끼다"], ["DAY 18", "beat", "이기다, 치다"], ["DAY 18", "indifferent", "무관심한"], ["DAY 18", "sew", "바느질하다"], ["DAY 18", "antibiotic", "항생제"],
+        ["DAY 18", "chronic", "만성의"], ["DAY 18", "sight", "시력, 시야"], ["DAY 18", "fatal", "치명적인"], ["DAY 18", "tremble", "떨다"], ["DAY 18", "patient", "환자; 인내심 있는"],
+        ["DAY 17", "biology", "생물학"], ["DAY 17", "gene", "유전자"], ["DAY 17", "factor", "요인, 요소"], ["DAY 17", "trace", "자국, 자취; 추적하다"], ["DAY 17", "require", "필요로 하다"],
+        ["DAY 17", "structure", "구조, 조직"], ["DAY 17", "research", "연구, 조사"], ["DAY 17", "intelligent", "지능이 있는"], ["DAY 17", "sign", "징후, 표시"], ["DAY 17", "sigh", "한숨을 쉬다"],
+        ["DAY 17", "insect", "곤충"], ["DAY 17", "circumstance", "상황, 환경"], ["DAY 17", "normal", "정상적인"], ["DAY 17", "threat", "위협"], ["DAY 17", "improve", "향상시키다"],
+        ["DAY 17", "repeat", "반복하다"], ["DAY 17", "resemble", "닮다"], ["DAY 17", "protein", "단백질"], ["DAY 17", "hatch", "부화하다"], ["DAY 17", "direct", "직접적인; 지시하다"],
+        ["DAY 17", "individual", "개인, 개인의"], ["DAY 17", "silent", "조용한"], ["DAY 17", "fiber", "섬유"], ["DAY 17", "ancestor", "조상"], ["DAY 17", "yawn", "하품하다"],
+        ["DAY 17", "pregnant", "임신한"], ["DAY 17", "stimulate", "자극하다"], ["DAY 17", "slightly", "약간"], ["DAY 17", "bleed", "피를 흘리다"], ["DAY 17", "breed", "번식하다"],
+        ["DAY 17", "crawl", "기어가다"], ["DAY 17", "sensation", "감각"], ["DAY 17", "sequence", "연속, 순서"], ["DAY 17", "blink", "깜빡이다"], ["DAY 17", "interfere", "간섭하다"],
+        ["DAY 17", "identical", "똑같은"], ["DAY 17", "empathy", "공감"], ["DAY 17", "dramatic", "극적인"], ["DAY 17", "explicit", "명백한"], ["DAY 17", "tissue", "조직"],
+        ["DAY 16", "nature", "자연, 본질"], ["DAY 16", "experiment", "실험하다, 시험"], ["DAY 16", "condition", "상태, 조건"], ["DAY 16", "distance", "거리, 간격"], ["DAY 16", "evidence", "증거"],
+        ["DAY 16", "chemical", "화학의, 화학물질"], ["DAY 16", "fluid", "액체, 유체"], ["DAY 16", "extensive", "광범위한, 많은"], ["DAY 16", "process", "과정, 처리하다"], ["DAY 16", "progress", "진보, 발전"],
+        ["DAY 16", "planet", "행성"], ["DAY 16", "conduct", "행동하다; 지휘하다"], ["DAY 16", "solid", "고체; 단단한"], ["DAY 16", "eternal", "영원한"], ["DAY 16", "gravity", "중력"],
+        ["DAY 16", "melt", "녹다, 녹이다"], ["DAY 16", "astronaut", "우주비행사"], ["DAY 16", "smooth", "부드러운, 매끄러운"], ["DAY 16", "oxygen", "산소"], ["DAY 16", "support", "지지하다, 지원하다"],
+        ["DAY 16", "acid", "산성의"], ["DAY 16", "orbit", "궤도, 궤도를 돌다"], ["DAY 16", "toxic", "독성의"], ["DAY 16", "liquid", "액체"], ["DAY 16", "universe", "우주"],
+        ["DAY 16", "reverse", "뒤집다, 반전시키다"], ["DAY 16", "extend", "확장하다"], ["DAY 16", "expand", "확장되다, 팽창하다"], ["DAY 16", "preserve", "보존하다"], ["DAY 16", "vapor", "증기"],
+        ["DAY 16", "invisible", "보이지 않는"], ["DAY 16", "substance", "물질"], ["DAY 16", "particle", "입자"], ["DAY 16", "moisture", "수분"], ["DAY 16", "abstract", "추상적인"],
+        ["DAY 16", "valid", "유효한"], ["DAY 16", "invention", "발명품"], ["DAY 16", "stick", "막대기; 붙이다, 고수하다"]
+    ];
+
+    // 상태 변수
+    let allWords = VOCAB_LIST.map(item => ({ day: item[0], eng: item[1], kor: item[2] }));
+    let currentPool = [];
+    let currentWord = null;
+    let currentAnswer = "";
+    let currentExampleEng = "";
+    let score = 0;
+    
+    // DOM 요소
+    const daySelect = document.getElementById('daySelect');
+    const modeSelect = document.getElementById('modeSelect');
+    const scoreBoard = document.getElementById('scoreBoard');
+    const questionLabel = document.getElementById('questionLabel');
+    const feedbackLabel = document.getElementById('feedbackLabel');
+    const optionsBtns = document.querySelectorAll('.btn-option');
+    const nextBtn = document.getElementById('nextBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const speakBtn = document.getElementById('speakBtn');
+    const exampleArea = document.getElementById('exampleArea');
+    const exampleText = document.getElementById('exampleText');
+    const speakExBtn = document.getElementById('speakExBtn');
+    const shadowBtn = document.getElementById('shadowBtn');
+
+    // 이벤트 리스너 등록
+    daySelect.addEventListener('change', resetAndLoad);
+    modeSelect.addEventListener('change', resetAndLoad);
+    saveBtn.addEventListener('click', () => saveToReview(currentWord.eng, currentWord.kor, false));
+    speakBtn.addEventListener('click', () => speakText(currentWord.eng));
+    speakExBtn.addEventListener('click', () => speakText(currentExampleEng));
+    shadowBtn.addEventListener('click', toggleShadowing);
+
+    // 초기화 및 문제 로드
+    function resetAndLoad() {
+        const day = daySelect.value;
+        if (day === '전체 랜덤') {
+            currentPool = [...allWords];
+        } else {
+            currentPool = allWords.filter(w => w.day === day);
+        }
+        score = 0;
+        updateScore();
+        nextQuestion();
+    }
+
+    function updateScore() {
+        scoreBoard.textContent = `Score: ${score} | Total: ${currentPool.length} words`;
+    }
+
+    function nextQuestion() {
+        if (currentPool.length === 0) return;
+        
+        // UI 초기화
+        nextBtn.style.display = 'none';
+        feedbackLabel.textContent = '';
+        exampleArea.style.display = 'none';
+        exampleText.innerHTML = '';
+        currentExampleEng = "";
+        saveBtn.textContent = '⭐ 오답 저장';
+        saveBtn.disabled = false;
+        speakBtn.disabled = false;
+        
+        optionsBtns.forEach(btn => {
+            btn.className = 'btn-option';
+            btn.disabled = false;
+        });
+
+        // 랜덤 단어 추출
+        currentWord = currentPool[Math.floor(Math.random() * currentPool.length)];
+        const mode = modeSelect.value;
+        
+        let allAnswersPool = [];
+        if (mode === 'en2ko') {
+            questionLabel.textContent = currentWord.eng;
+            currentAnswer = currentWord.kor;
+            allAnswersPool = allWords.map(w => w.kor);
+        } else {
+            questionLabel.textContent = currentWord.kor;
+            currentAnswer = currentWord.eng;
+            speakBtn.disabled = true; // 한->영 모드일때는 문제 듣기 비활성화
+            allAnswersPool = allWords.map(w => w.eng);
+        }
+
+        // 4지 선다 생성 (정답 1 + 오답 3)
+        let options = [currentAnswer];
+        while (options.length < 4) {
+            let wrong = allAnswersPool[Math.floor(Math.random() * allAnswersPool.length)];
+            if (!options.includes(wrong)) {
+                options.push(wrong);
+            }
+        }
+        options.sort(() => Math.random() - 0.5); // 셔플
+
+        optionsBtns.forEach((btn, index) => {
+            btn.textContent = options[index];
+        });
+    }
+
+    function checkAnswer(clickedBtn) {
+        // 모든 버튼 비활성화
+        optionsBtns.forEach(btn => btn.disabled = true);
+        
+        const isCorrect = (clickedBtn.textContent === currentAnswer);
+        
+        if (isCorrect) {
+            score += 10;
+            clickedBtn.classList.add('correct');
+            feedbackLabel.textContent = "정답입니다! 🎉";
+            feedbackLabel.style.color = "#27ae60";
+            speakText(currentWord.eng);
+        } else {
+            clickedBtn.classList.add('wrong');
+            feedbackLabel.textContent = `땡! 정답은: ${currentAnswer}`;
+            feedbackLabel.style.color = "#c0392b";
+            
+            // 진짜 정답 버튼에 초록색 표시
+            optionsBtns.forEach(btn => {
+                if (btn.textContent === currentAnswer) btn.classList.add('correct');
+            });
+            
+            saveToReview(currentWord.eng, currentWord.kor, true); // 자동 저장
+        }
+        
+        updateScore();
+        fetchExample(currentWord.eng);
+        nextBtn.style.display = 'block';
+    }
+
+    // 예문 API 호출 (Dictionary API + MyMemory API)
+    async function fetchExample(word) {
+        exampleArea.style.display = 'flex';
+        exampleText.innerHTML = "📝 예문과 해석을 불러오는 중...";
+        speakExBtn.disabled = true;
+        shadowBtn.disabled = true;
+        
+        try {
+            const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
+            if (!res.ok) throw new Error("Not found");
+            const data = await res.json();
+            
+            let engSentence = "";
+            // 예문 찾기 로직
+            for (let meaning of data[0].meanings) {
+                for (let def of meaning.definitions) {
+                    if (def.example) {
+                        engSentence = def.example;
+                        break;
+                    }
+                }
+                if (engSentence) break;
+            }
+            
+            if (engSentence) {
+                currentExampleEng = engSentence;
+                // 번역 API 호출
+                const transRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(engSentence)}&langpair=en|ko`);
+                const transData = await transRes.json();
+                let korSentence = transData.responseData.translatedText;
+                
+                exampleText.innerHTML = `<strong>💡 예문:</strong> ${engSentence}<br><br><strong>🇰🇷 해석:</strong> ${korSentence}`;
+                speakExBtn.disabled = false;
+                shadowBtn.disabled = false;
+            } else {
+                exampleText.innerHTML = "💡 이 단어는 등록된 예문이 없습니다.";
+            }
+        } catch (error) {
+            exampleText.innerHTML = "💡 예문을 찾을 수 없거나 인터넷 연결 문제가 있습니다.";
+        }
+    }
+
+    // 오답노트 저장 (LocalStorage 이용)
+    function saveToReview(eng, kor, isAuto) {
+        let savedWords = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
+        let exists = savedWords.find(w => w.eng === eng);
+        
+        if (exists) {
+            if (!isAuto) saveBtn.textContent = '이미 저장됨';
+        } else {
+            savedWords.push({ eng, kor, date: new Date().toISOString() });
+            localStorage.setItem('myVocaReview', JSON.stringify(savedWords));
+            saveBtn.textContent = isAuto ? '자동 저장됨' : '✅ 저장 완료';
+        }
+        saveBtn.disabled = true;
+    }
+
+    // TTS (Text-to-Speech)
+    function speakText(text) {
+        if (!text) return;
+        window.speechSynthesis.cancel(); // 진행중인 음성 취소
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // STT (Speech-to-Text) 쉐도잉 기능
+    let recognition;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window) {
+        recognition = new webkitSpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+
+        recognition.onresult = function(event) {
+            const userSpeech = event.results[0][0].transcript;
+            analyzeSpeech(userSpeech);
+            resetShadowBtn();
+        };
+
+        recognition.onerror = function(event) {
+            alert("마이크 인식 오류가 발생했습니다. 권한을 확인해주세요.");
+            resetShadowBtn();
+        };
+        
+        recognition.onend = resetShadowBtn;
+    }
+
+    function toggleShadowing() {
+        if (!recognition) {
+            alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 이용해주세요.");
+            return;
+        }
+
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            isRecording = true;
+            shadowBtn.textContent = '🛑';
+            exampleText.innerHTML = `<strong>🔴 [녹음 중]</strong> 원어민 발음을 듣고 따라 말한 뒤 🛑 버튼을 누르세요!`;
+            speakText(currentExampleEng); // 원어민 발음 선 재생
+            setTimeout(() => recognition.start(), 500); // 발음 끝날 즈음 녹음 시작 유도
+        }
+    }
+
+    function resetShadowBtn() {
+        isRecording = false;
+        shadowBtn.textContent = '🎙';
+    }
+
+    // 쉐도잉 발음 정확도 분석 (Levenshtein Distance 기반 유사도 알고리즘)
+    function analyzeSpeech(userText) {
+        const cleanTarget = currentExampleEng.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+        const cleanUser = userText.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+        
+        let ratio = getSimilarity(cleanTarget, cleanUser);
+        let score = Math.round(ratio * 100);
+        
+        let msg = score >= 80 
+            ? `🎉 완벽해요! (일치율: ${score}%)\n\n[내 발음]\n${userText}` 
+            : `💪 조금 더 연습해봐요! (일치율: ${score}%)\n\n[내 발음]\n${userText}`;
+            
+        alert(msg);
+        
+        // 다시 원래 예문 텍스트 복구
+        fetchExample(currentWord.eng); 
+    }
+
+    // 두 문자열의 유사도를 구하는 함수
+    function getSimilarity(s1, s2) {
+        let longer = s1, shorter = s2;
+        if (s1.length < s2.length) { longer = s2; shorter = s1; }
+        let longerLength = longer.length;
+        if (longerLength == 0) return 1.0;
+        let editDistance = getEditDistance(longer, shorter);
+        return (longerLength - editDistance) / parseFloat(longerLength);
+    }
+
+    function getEditDistance(s1, s2) {
+        let costs = [];
+        for (let i = 0; i <= s1.length; i++) {
+            let lastValue = i;
+            for (let j = 0; j <= s2.length; j++) {
+                if (i == 0) costs[j] = j;
+                else {
+                    if (j > 0) {
+                        let newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+            }
+            if (i > 0) costs[s2.length] = lastValue;
+        }
+        return costs[s2.length];
+    }
+
+    // 시작
+    resetAndLoad();
+
+</script>
+</body>
+</html>
