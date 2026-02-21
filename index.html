@@ -5,17 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>마스터 영단어 퀴즈</title>
     <style>
-        /* CSS: 디자인 설정 (기존 파이썬 UI 색상 및 스타일 반영) */
+        /* CSS: 디자인 설정 */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #2c3e50; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 400px; }
+        .app-container { width: 100%; max-width: 400px; position: relative; }
+        
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .app-title { font-size: 20px; font-weight: bold; margin: 0; color: #2c3e50; }
+        .btn-review-modal { background-color: #34495e; color: white; border: none; padding: 8px 12px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; }
         
         .controls { display: flex; gap: 10px; margin-bottom: 10px; }
         select { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #bdc3c7; font-size: 14px; background-color: white; color: #8e44ad; font-weight: bold;}
         
-        .score-board { text-align: right; font-size: 14px; color: #7f8c8d; font-weight: bold; margin-bottom: 10px; }
-        
+        .score-board { display: flex; justify-content: space-between; font-size: 13px; color: #7f8c8d; font-weight: bold; margin-bottom: 10px; background: white; padding: 10px; border-radius: 8px; border: 1px solid #dcdde1;}
+        .score-text { color: #e74c3c; }
+
         .card { background-color: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); text-align: center; margin-bottom: 15px; border: 1px solid #dcdde1; }
-        .word-display { font-size: 32px; font-weight: bold; margin-bottom: 20px; word-break: keep-all; }
+        .word-display { font-size: 32px; font-weight: bold; margin-bottom: 20px; word-break: keep-all; min-height: 40px; }
         
         .btn-group { display: flex; justify-content: center; gap: 10px; margin-bottom: 10px; }
         button { cursor: pointer; border: none; border-radius: 8px; padding: 10px 15px; font-size: 14px; font-weight: bold; transition: 0.2s; }
@@ -29,37 +34,73 @@
         .example-area { background-color: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 13px; color: #34495e; text-align: left; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #eee;}
         .example-text { flex: 1; line-height: 1.4;}
         .example-actions { display: flex; gap: 10px; justify-content: flex-end; }
-        .btn-icon { background: #ecf0f1; font-size: 18px; padding: 8px 12px; border-radius: 50%; }
+        .btn-icon { background: #ecf0f1; font-size: 18px; padding: 8px 12px; border-radius: 50%; color: #2c3e50;}
         
+        /* 4지 선다 모드 */
         .options { display: flex; flex-direction: column; gap: 10px; }
         .btn-option { background-color: white; border: 1px solid #bdc3c7; padding: 15px; font-size: 16px; color: #2f3640; border-radius: 10px; }
         .btn-option:hover:not(:disabled) { background-color: #ecf0f1; }
         .btn-option.correct { background-color: #badc58 !important; color: white; border-color: #badc58; }
         .btn-option.wrong { background-color: #ff7979 !important; color: white; border-color: #ff7979; }
         
+        /* 직접 입력(주관식) 모드 */
+        .typing-container { display: none; flex-direction: column; gap: 10px; }
+        .type-input { padding: 15px; font-size: 18px; border: 2px solid #bdc3c7; border-radius: 10px; text-align: center; font-weight: bold; outline: none; }
+        .type-input:focus { border-color: #8e44ad; }
+        .type-input.correct { background-color: #dff9fb; border-color: #badc58; color: #27ae60; }
+        .type-input.wrong { background-color: #ffefef; border-color: #ff7979; color: #c0392b; }
+        .btn-submit { background-color: #3498db; color: white; padding: 15px; font-size: 16px; border-radius: 10px; }
+
         .btn-next { background-color: #2ecc71; color: white; width: 100%; padding: 15px; font-size: 18px; border-radius: 10px; margin-top: 15px; display: none; }
+        .btn-restart { background-color: #8e44ad; color: white; width: 100%; padding: 15px; font-size: 18px; border-radius: 10px; margin-top: 15px; display: none; }
+
+        /* 오답 노트 모달(팝업) 스타일 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box;}
+        .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 20px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px;}
+        .modal-title { font-size: 18px; font-weight: bold; margin: 0; color: #e74c3c; }
+        .btn-close-modal { background: none; border: none; font-size: 24px; cursor: pointer; color: #7f8c8d; padding: 0; }
+        .review-list { overflow-y: auto; flex: 1; padding-right: 5px; }
+        .review-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f2f5; }
+        .review-item:last-child { border-bottom: none; }
+        .review-word-box { display: flex; flex-direction: column; gap: 4px; }
+        .review-eng { font-weight: bold; font-size: 16px; color: #2c3e50; }
+        .review-kor { font-size: 13px; color: #7f8c8d; }
+        .btn-delete-review { background: #ff7675; color: white; border: none; border-radius: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer; }
+        .empty-msg { text-align: center; color: #95a5a6; padding: 30px 0; font-size: 14px; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
+    <div class="header-top">
+        <h1 class="app-title">마스터 영단어</h1>
+        <button class="btn-review-modal" onclick="openReviewModal()">📝 오답 노트</button>
+    </div>
+
     <div class="controls">
         <select id="daySelect">
             <option value="전체 랜덤">전체 랜덤</option>
-            <option value="DAY 16">DAY 16</option>
-            <option value="DAY 17">DAY 17</option>
-            <option value="DAY 18">DAY 18</option>
+            <option value="DAY 20">DAY 20</option>
             <option value="DAY 19">DAY 19</option>
+            <option value="DAY 18">DAY 18</option>
+            <option value="DAY 17">DAY 17</option>
+            <option value="DAY 16">DAY 16</option>
         </select>
         <select id="modeSelect">
-            <option value="en2ko">영어 ➔ 한글</option>
-            <option value="ko2en">한글 ➔ 영어</option>
+            <option value="en2ko">영어 ➔ 한글 (선택)</option>
+            <option value="ko2en">한글 ➔ 영어 (선택)</option>
+            <option value="ko2en_type">한글 ➔ 영어 (직접 입력)</option>
         </select>
     </div>
 
-    <div class="score-board" id="scoreBoard">Score: 0 | Total: 0 words</div>
+    <div class="score-board">
+        <span id="progressText">진행: 0 / 0</span>
+        <span id="remainText">남은 단어: 0</span>
+        <span class="score-text" id="scoreText">점수: 0</span>
+    </div>
 
-    <div class="card">
+    <div class="card" id="quizCard">
         <div class="word-display" id="questionLabel">Loading...</div>
         <div class="btn-group">
             <button class="btn-speak" id="speakBtn">🔊 단어 듣기</button>
@@ -78,18 +119,43 @@
     </div>
 
     <div class="options" id="optionsContainer">
-        <button class="btn-option" onclick="checkAnswer(this)"></button>
-        <button class="btn-option" onclick="checkAnswer(this)"></button>
-        <button class="btn-option" onclick="checkAnswer(this)"></button>
-        <button class="btn-option" onclick="checkAnswer(this)"></button>
+        <button class="btn-option" onclick="checkAnswerChoice(this)"></button>
+        <button class="btn-option" onclick="checkAnswerChoice(this)"></button>
+        <button class="btn-option" onclick="checkAnswerChoice(this)"></button>
+        <button class="btn-option" onclick="checkAnswerChoice(this)"></button>
+    </div>
+
+    <div class="typing-container" id="typingContainer">
+        <input type="text" id="typeInput" class="type-input" placeholder="영어 스펠링을 입력하세요" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <button class="btn-submit" id="typeSubmitBtn" onclick="checkAnswerTyping()">정답 확인</button>
     </div>
 
     <button class="btn-next" id="nextBtn" onclick="nextQuestion()">다음 문제 ➔</button>
+    <button class="btn-restart" id="restartBtn" onclick="resetAndLoad()">다시 풀기 ↺</button>
+</div>
+
+<div class="modal-overlay" id="reviewModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">나의 오답 노트</h2>
+            <button class="btn-close-modal" onclick="closeReviewModal()">×</button>
+        </div>
+        <div class="review-list" id="reviewList">
+            </div>
+    </div>
 </div>
 
 <script>
-    // 1. 단어 데이터 세팅 (Python의 VOCAB_LIST 와 동일)
+    // 1. 단어 데이터 세팅 (DAY 16~20)
     const VOCAB_LIST = [
+        ["DAY 20", "traffic", "교통, 통행, 운송량"], ["DAY 20", "major", "주요한, 대다수의; 전공"], ["DAY 20", "route", "길, 통로, 노선"], ["DAY 20", "rush", "돌진하다, 재촉하다; 돌진"], ["DAY 20", "vehicle", "차량, 운송 수단"],
+        ["DAY 20", "transport", "운송하다, 수송하다"], ["DAY 20", "utilize", "이용하다, 활용하다"], ["DAY 20", "remote", "외딴, 먼; 리모컨"], ["DAY 20", "leap", "껑충 뛰다, 도약"], ["DAY 20", "leak", "(물이) 새다; 누출"],
+        ["DAY 20", "guess", "추측하다, 짐작하다"], ["DAY 20", "temperature", "온도, 체온"], ["DAY 20", "passage", "통로, 복도; 구절"], ["DAY 20", "flat", "평평한, 바람 빠진"], ["DAY 20", "enormous", "거대한, 엄청난"],
+        ["DAY 20", "accurate", "정확한"], ["DAY 20", "freeze", "얼다, 얼리다; 동결"], ["DAY 20", "gear", "장비, 기어"], ["DAY 20", "fuel", "연료; 연료를 공급하다"], ["DAY 20", "miss", "놓치다, 그리워하다"],
+        ["DAY 20", "license", "면허, 허가증"], ["DAY 20", "construction", "건설, 건축"], ["DAY 20", "wireless", "무선의"], ["DAY 20", "nevertheless", "그럼에도 불구하고"], ["DAY 20", "barrier", "장벽, 울타리; 장애물"],
+        ["DAY 20", "lift", "들어올리다; 승강기"], ["DAY 20", "curved", "곡선의, 구부러진"], ["DAY 20", "eliminate", "제거하다, 없애다"], ["DAY 20", "commit", "저지르다, 약속하다; (활동 등에) 전념하다"], ["DAY 20", "commute", "통근하다, 통근"],
+        ["DAY 20", "drag", "끌다, 끌고 가다"], ["DAY 20", "fasten", "고정하다, 잠그다"], ["DAY 20", "precise", "정확한, 정밀한"], ["DAY 20", "vital", "필수적인, 생명과 관련된"], ["DAY 20", "component", "구성 요소, 부품"],
+        ["DAY 20", "seldom", "거의 ~않는"], ["DAY 20", "enhance", "향상시키다, 강화하다"], ["DAY 20", "sink", "가라앉다; 싱크대"], ["DAY 20", "destination", "목적지, 도착지"], ["DAY 20", "station", "역, 정거장; 배치하다"],
         ["DAY 19", "modern", "현대의, 최신의"], ["DAY 19", "mobile", "이동식의, 기동성의, 이동전화"], ["DAY 19", "function", "기능, 작용, 의식; 기능하다, 역할을 하다"], ["DAY 19", "machine", "기계, 장치"], ["DAY 19", "repair", "수리, 수선; 수리하다, 고치다"],
         ["DAY 19", "efficient", "능률적인, 효율적인"], ["DAY 19", "install", "설치하다, 장착하다"], ["DAY 19", "innovation", "혁신, 쇄신"], ["DAY 19", "trust", "신뢰하다, 믿다; 신뢰, 신임"], ["DAY 19", "truth", "진실, 사실"],
         ["DAY 19", "imagine", "상상하다, 가정하다"], ["DAY 19", "artificial", "인공의, 인위적인"], ["DAY 19", "adjust", "맞추다, 조정하다, 적응하다"], ["DAY 19", "ideal", "이상적인, 최상의; 이상향"], ["DAY 19", "gather", "모으다, 수집하다"],
@@ -126,26 +192,37 @@
 
     // 상태 변수
     let allWords = VOCAB_LIST.map(item => ({ day: item[0], eng: item[1], kor: item[2] }));
-    let currentPool = [];
+    let sessionQueue = []; // 이번 학습 세션에 남은 단어들
+    let totalSessionWords = 0;
+    let completedWords = 0;
     let currentWord = null;
     let currentAnswer = "";
     let currentExampleEng = "";
     let score = 0;
+    let isQuestionResolved = false; // 현재 문제를 풀었는지 여부
     
     // DOM 요소
     const daySelect = document.getElementById('daySelect');
     const modeSelect = document.getElementById('modeSelect');
-    const scoreBoard = document.getElementById('scoreBoard');
+    const progressText = document.getElementById('progressText');
+    const remainText = document.getElementById('remainText');
+    const scoreText = document.getElementById('scoreText');
     const questionLabel = document.getElementById('questionLabel');
     const feedbackLabel = document.getElementById('feedbackLabel');
+    const optionsContainer = document.getElementById('optionsContainer');
     const optionsBtns = document.querySelectorAll('.btn-option');
+    const typingContainer = document.getElementById('typingContainer');
+    const typeInput = document.getElementById('typeInput');
+    const typeSubmitBtn = document.getElementById('typeSubmitBtn');
     const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
     const saveBtn = document.getElementById('saveBtn');
     const speakBtn = document.getElementById('speakBtn');
     const exampleArea = document.getElementById('exampleArea');
-    const exampleText = document.getElementById('exampleText');
+    const exampleTextDOM = document.getElementById('exampleText');
     const speakExBtn = document.getElementById('speakExBtn');
     const shadowBtn = document.getElementById('shadowBtn');
+    const quizCard = document.getElementById('quizCard');
 
     // 이벤트 리스너 등록
     daySelect.addEventListener('change', resetAndLoad);
@@ -154,107 +231,179 @@
     speakBtn.addEventListener('click', () => speakText(currentWord.eng));
     speakExBtn.addEventListener('click', () => speakText(currentExampleEng));
     shadowBtn.addEventListener('click', toggleShadowing);
+    
+    // 엔터키 입력 처리 (주관식 모드 및 다음 문제 넘어가기)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            if (!isQuestionResolved && modeSelect.value === 'ko2en_type' && document.activeElement === typeInput) {
+                checkAnswerTyping();
+            } else if (isQuestionResolved && nextBtn.style.display === 'block') {
+                nextQuestion();
+            }
+        }
+    });
 
-    // 초기화 및 문제 로드
+    // 초기화 및 세션 로드
     function resetAndLoad() {
         const day = daySelect.value;
+        let pool = [];
         if (day === '전체 랜덤') {
-            currentPool = [...allWords];
+            pool = [...allWords];
         } else {
-            currentPool = allWords.filter(w => w.day === day);
+            pool = allWords.filter(w => w.day === day);
         }
+        
+        // 단어 리스트 무작위 섞기 (Fisher-Yates Shuffle)
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        
+        sessionQueue = pool;
+        totalSessionWords = sessionQueue.length;
+        completedWords = 0;
         score = 0;
-        updateScore();
+        
+        restartBtn.style.display = 'none';
+        quizCard.style.display = 'block';
+        updateScoreBoard();
         nextQuestion();
     }
 
-    function updateScore() {
-        scoreBoard.textContent = `Score: ${score} | Total: ${currentPool.length} words`;
+    function updateScoreBoard() {
+        progressText.textContent = `진행: ${completedWords} / ${totalSessionWords}`;
+        remainText.textContent = `남은 단어: ${sessionQueue.length}`;
+        scoreText.textContent = `점수: ${score}`;
     }
 
     function nextQuestion() {
-        if (currentPool.length === 0) return;
+        if (sessionQueue.length === 0) {
+            // 모든 단어 학습 완료
+            quizCard.style.display = 'none';
+            optionsContainer.style.display = 'none';
+            typingContainer.style.display = 'none';
+            exampleArea.style.display = 'none';
+            feedbackLabel.textContent = "🎉 선택한 Day의 모든 단어를 학습했습니다!";
+            feedbackLabel.style.color = "#27ae60";
+            nextBtn.style.display = 'none';
+            restartBtn.style.display = 'block';
+            return;
+        }
+        
+        isQuestionResolved = false;
+        currentWord = sessionQueue.pop(); // 큐에서 하나 뽑음
+        const mode = modeSelect.value;
         
         // UI 초기화
         nextBtn.style.display = 'none';
         feedbackLabel.textContent = '';
         exampleArea.style.display = 'none';
-        exampleText.innerHTML = '';
+        exampleTextDOM.innerHTML = '';
         currentExampleEng = "";
         saveBtn.textContent = '⭐ 오답 저장';
         saveBtn.disabled = false;
         speakBtn.disabled = false;
         
-        optionsBtns.forEach(btn => {
-            btn.className = 'btn-option';
-            btn.disabled = false;
-        });
-
-        // 랜덤 단어 추출
-        currentWord = currentPool[Math.floor(Math.random() * currentPool.length)];
-        const mode = modeSelect.value;
-        
-        let allAnswersPool = [];
-        if (mode === 'en2ko') {
-            questionLabel.textContent = currentWord.eng;
-            currentAnswer = currentWord.kor;
-            allAnswersPool = allWords.map(w => w.kor);
-        } else {
+        // 모드별 화면 구성 설정
+        if (mode === 'ko2en_type') {
+            // 직접 입력 모드
+            optionsContainer.style.display = 'none';
+            typingContainer.style.display = 'flex';
+            typeInput.value = '';
+            typeInput.disabled = false;
+            typeInput.className = 'type-input';
+            typeSubmitBtn.disabled = false;
+            typeInput.focus();
+            
             questionLabel.textContent = currentWord.kor;
             currentAnswer = currentWord.eng;
-            speakBtn.disabled = true; // 한->영 모드일때는 문제 듣기 비활성화
-            allAnswersPool = allWords.map(w => w.eng);
-        }
-
-        // 4지 선다 생성 (정답 1 + 오답 3)
-        let options = [currentAnswer];
-        while (options.length < 4) {
-            let wrong = allAnswersPool[Math.floor(Math.random() * allAnswersPool.length)];
-            if (!options.includes(wrong)) {
-                options.push(wrong);
+            speakBtn.disabled = true; // 듣기 힌트 방지
+        } else {
+            // 4지 선다 모드
+            optionsContainer.style.display = 'flex';
+            typingContainer.style.display = 'none';
+            optionsBtns.forEach(btn => {
+                btn.className = 'btn-option';
+                btn.disabled = false;
+            });
+            
+            let allAnswersPool = [];
+            if (mode === 'en2ko') {
+                questionLabel.textContent = currentWord.eng;
+                currentAnswer = currentWord.kor;
+                allAnswersPool = allWords.map(w => w.kor);
+            } else {
+                questionLabel.textContent = currentWord.kor;
+                currentAnswer = currentWord.eng;
+                speakBtn.disabled = true;
+                allAnswersPool = allWords.map(w => w.eng);
             }
-        }
-        options.sort(() => Math.random() - 0.5); // 셔플
 
-        optionsBtns.forEach((btn, index) => {
-            btn.textContent = options[index];
-        });
+            // 보기 4개 생성
+            let options = [currentAnswer];
+            while (options.length < 4) {
+                let wrong = allAnswersPool[Math.floor(Math.random() * allAnswersPool.length)];
+                if (!options.includes(wrong)) options.push(wrong);
+            }
+            options.sort(() => Math.random() - 0.5); // 섞기
+            optionsBtns.forEach((btn, index) => {
+                btn.textContent = options[index];
+            });
+        }
     }
 
-    function checkAnswer(clickedBtn) {
-        // 모든 버튼 비활성화
+    // 객관식 정답 체크
+    function checkAnswerChoice(clickedBtn) {
         optionsBtns.forEach(btn => btn.disabled = true);
-        
         const isCorrect = (clickedBtn.textContent === currentAnswer);
+        processResult(isCorrect, clickedBtn);
+    }
+
+    // 주관식 정답 체크
+    function checkAnswerTyping() {
+        const userText = typeInput.value.trim().toLowerCase();
+        if (userText === '') return;
+        
+        typeInput.disabled = true;
+        typeSubmitBtn.disabled = true;
+        const isCorrect = (userText === currentAnswer.toLowerCase());
+        
+        processResult(isCorrect, null);
+    }
+
+    // 결과 처리 공통 로직
+    function processResult(isCorrect, clickedBtn) {
+        isQuestionResolved = true;
+        completedWords++;
         
         if (isCorrect) {
             score += 10;
-            clickedBtn.classList.add('correct');
             feedbackLabel.textContent = "정답입니다! 🎉";
             feedbackLabel.style.color = "#27ae60";
+            if(clickedBtn) clickedBtn.classList.add('correct');
+            else typeInput.classList.add('correct');
             speakText(currentWord.eng);
         } else {
-            clickedBtn.classList.add('wrong');
-            feedbackLabel.textContent = `땡! 정답은: ${currentAnswer}`;
+            feedbackLabel.innerHTML = `땡! 정답은: <span style="text-decoration: underline;">${currentAnswer}</span>`;
             feedbackLabel.style.color = "#c0392b";
-            
-            // 진짜 정답 버튼에 초록색 표시
-            optionsBtns.forEach(btn => {
-                if (btn.textContent === currentAnswer) btn.classList.add('correct');
-            });
-            
-            saveToReview(currentWord.eng, currentWord.kor, true); // 자동 저장
+            if(clickedBtn) {
+                clickedBtn.classList.add('wrong');
+                optionsBtns.forEach(btn => { if (btn.textContent === currentAnswer) btn.classList.add('correct'); });
+            } else {
+                typeInput.classList.add('wrong');
+            }
+            saveToReview(currentWord.eng, currentWord.kor, true); // 오답노트 자동 저장
         }
         
-        updateScore();
+        updateScoreBoard();
         fetchExample(currentWord.eng);
         nextBtn.style.display = 'block';
     }
 
-    // 예문 API 호출 (Dictionary API + MyMemory API)
+    // 예문 API 호출
     async function fetchExample(word) {
         exampleArea.style.display = 'flex';
-        exampleText.innerHTML = "📝 예문과 해석을 불러오는 중...";
+        exampleTextDOM.innerHTML = "📝 예문과 해석을 불러오는 중...";
         speakExBtn.disabled = true;
         shadowBtn.disabled = true;
         
@@ -264,7 +413,6 @@
             const data = await res.json();
             
             let engSentence = "";
-            // 예문 찾기 로직
             for (let meaning of data[0].meanings) {
                 for (let def of meaning.definitions) {
                     if (def.example) {
@@ -277,23 +425,24 @@
             
             if (engSentence) {
                 currentExampleEng = engSentence;
-                // 번역 API 호출
                 const transRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(engSentence)}&langpair=en|ko`);
                 const transData = await transRes.json();
                 let korSentence = transData.responseData.translatedText;
                 
-                exampleText.innerHTML = `<strong>💡 예문:</strong> ${engSentence}<br><br><strong>🇰🇷 해석:</strong> ${korSentence}`;
+                exampleTextDOM.innerHTML = `<strong>💡 예문:</strong> ${engSentence}<br><br><strong>🇰🇷 해석:</strong> ${korSentence}`;
                 speakExBtn.disabled = false;
                 shadowBtn.disabled = false;
             } else {
-                exampleText.innerHTML = "💡 이 단어는 등록된 예문이 없습니다.";
+                exampleTextDOM.innerHTML = "💡 이 단어는 등록된 예문이 없습니다.";
             }
         } catch (error) {
-            exampleText.innerHTML = "💡 예문을 찾을 수 없거나 인터넷 연결 문제가 있습니다.";
+            exampleTextDOM.innerHTML = "💡 예문을 찾을 수 없거나 인터넷 연결 문제가 있습니다.";
         }
     }
 
-    // 오답노트 저장 (LocalStorage 이용)
+    // ==========================================
+    // 오답 노트(Review) 관련 함수들
+    // ==========================================
     function saveToReview(eng, kor, isAuto) {
         let savedWords = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
         let exists = savedWords.find(w => w.eng === eng);
@@ -301,87 +450,104 @@
         if (exists) {
             if (!isAuto) saveBtn.textContent = '이미 저장됨';
         } else {
-            savedWords.push({ eng, kor, date: new Date().toISOString() });
+            savedWords.push({ eng, kor, date: new Date().getTime() });
             localStorage.setItem('myVocaReview', JSON.stringify(savedWords));
             saveBtn.textContent = isAuto ? '자동 저장됨' : '✅ 저장 완료';
         }
         saveBtn.disabled = true;
     }
 
-    // TTS (Text-to-Speech)
+    function openReviewModal() {
+        const modal = document.getElementById('reviewModal');
+        const listDiv = document.getElementById('reviewList');
+        let savedWords = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
+        
+        // 최신 저장순으로 정렬
+        savedWords.sort((a, b) => b.date - a.date);
+        
+        listDiv.innerHTML = '';
+        if (savedWords.length === 0) {
+            listDiv.innerHTML = '<div class="empty-msg">저장된 오답이 없습니다.<br>문제를 풀며 틀린 단어가 이곳에 쌓입니다.</div>';
+        } else {
+            savedWords.forEach((word, index) => {
+                const item = document.createElement('div');
+                item.className = 'review-item';
+                item.innerHTML = `
+                    <div class="review-word-box">
+                        <span class="review-eng">${word.eng}</span>
+                        <span class="review-kor">${word.kor}</span>
+                    </div>
+                    <button class="btn-delete-review" onclick="deleteReviewWord('${word.eng}')">삭제</button>
+                `;
+                listDiv.appendChild(item);
+            });
+        }
+        modal.style.display = 'flex';
+    }
+
+    function closeReviewModal() {
+        document.getElementById('reviewModal').style.display = 'none';
+    }
+
+    function deleteReviewWord(eng) {
+        let savedWords = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
+        savedWords = savedWords.filter(w => w.eng !== eng);
+        localStorage.setItem('myVocaReview', JSON.stringify(savedWords));
+        openReviewModal(); // 리스트 새로고침
+    }
+
+    // 모달 바깥 영역 클릭시 닫기
+    window.onclick = function(event) {
+        const modal = document.getElementById('reviewModal');
+        if (event.target === modal) {
+            closeReviewModal();
+        }
+    }
+
+    // TTS 및 STT (기존 코드 동일)
     function speakText(text) {
         if (!text) return;
-        window.speechSynthesis.cancel(); // 진행중인 음성 취소
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'en-US';
         window.speechSynthesis.speak(utterance);
     }
 
-    // STT (Speech-to-Text) 쉐도잉 기능
     let recognition;
     let isRecording = false;
-
     if ('webkitSpeechRecognition' in window) {
         recognition = new webkitSpeechRecognition();
         recognition.continuous = false;
         recognition.interimResults = false;
         recognition.lang = 'en-US';
-
-        recognition.onresult = function(event) {
-            const userSpeech = event.results[0][0].transcript;
-            analyzeSpeech(userSpeech);
-            resetShadowBtn();
-        };
-
-        recognition.onerror = function(event) {
-            alert("마이크 인식 오류가 발생했습니다. 권한을 확인해주세요.");
-            resetShadowBtn();
-        };
-        
+        recognition.onresult = function(event) { analyzeSpeech(event.results[0][0].transcript); resetShadowBtn(); };
+        recognition.onerror = function(event) { alert("마이크 인식 오류. 권한을 확인해주세요."); resetShadowBtn(); };
         recognition.onend = resetShadowBtn;
     }
 
     function toggleShadowing() {
-        if (!recognition) {
-            alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 이용해주세요.");
-            return;
-        }
-
-        if (isRecording) {
-            recognition.stop();
-        } else {
+        if (!recognition) { alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 이용해주세요."); return; }
+        if (isRecording) { recognition.stop(); } 
+        else {
             isRecording = true;
             shadowBtn.textContent = '🛑';
-            exampleText.innerHTML = `<strong>🔴 [녹음 중]</strong> 원어민 발음을 듣고 따라 말한 뒤 🛑 버튼을 누르세요!`;
-            speakText(currentExampleEng); // 원어민 발음 선 재생
-            setTimeout(() => recognition.start(), 500); // 발음 끝날 즈음 녹음 시작 유도
+            exampleTextDOM.innerHTML = `<strong>🔴 [녹음 중]</strong> 원어민 발음을 듣고 따라 말한 뒤 🛑 버튼을 누르세요!`;
+            speakText(currentExampleEng);
+            setTimeout(() => recognition.start(), 500);
         }
     }
+    function resetShadowBtn() { isRecording = false; shadowBtn.textContent = '🎙'; }
 
-    function resetShadowBtn() {
-        isRecording = false;
-        shadowBtn.textContent = '🎙';
-    }
-
-    // 쉐도잉 발음 정확도 분석 (Levenshtein Distance 기반 유사도 알고리즘)
     function analyzeSpeech(userText) {
         const cleanTarget = currentExampleEng.toLowerCase().replace(/[^a-z0-9 ]/g, '');
         const cleanUser = userText.toLowerCase().replace(/[^a-z0-9 ]/g, '');
-        
         let ratio = getSimilarity(cleanTarget, cleanUser);
         let score = Math.round(ratio * 100);
-        
-        let msg = score >= 80 
-            ? `🎉 완벽해요! (일치율: ${score}%)\n\n[내 발음]\n${userText}` 
-            : `💪 조금 더 연습해봐요! (일치율: ${score}%)\n\n[내 발음]\n${userText}`;
-            
+        let msg = score >= 80 ? `🎉 완벽해요! (일치율: ${score}%)\n\n[내 발음]\n${userText}` : `💪 조금 더 연습해봐요! (일치율: ${score}%)\n\n[내 발음]\n${userText}`;
         alert(msg);
-        
-        // 다시 원래 예문 텍스트 복구
         fetchExample(currentWord.eng); 
     }
 
-    // 두 문자열의 유사도를 구하는 함수
     function getSimilarity(s1, s2) {
         let longer = s1, shorter = s2;
         if (s1.length < s2.length) { longer = s2; shorter = s1; }
@@ -390,7 +556,6 @@
         let editDistance = getEditDistance(longer, shorter);
         return (longerLength - editDistance) / parseFloat(longerLength);
     }
-
     function getEditDistance(s1, s2) {
         let costs = [];
         for (let i = 0; i <= s1.length; i++) {
@@ -400,10 +565,8 @@
                 else {
                     if (j > 0) {
                         let newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
-                            newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                        costs[j - 1] = lastValue;
-                        lastValue = newValue;
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
+                        costs[j - 1] = lastValue; lastValue = newValue;
                     }
                 }
             }
