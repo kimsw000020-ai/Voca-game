@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>마스터 영단어 퀴즈</title>
+    <title>마스터 영단어 KM (Web Pro)</title>
     <style>
         /* CSS: 디자인 설정 */
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #2c3e50; margin: 0; padding: 20px; display: flex; justify-content: center; }
@@ -36,14 +36,12 @@
         .example-actions { display: flex; gap: 10px; justify-content: flex-end; }
         .btn-icon { background: #ecf0f1; font-size: 18px; padding: 8px 12px; border-radius: 50%; color: #2c3e50;}
         
-        /* 4지 선다 모드 */
         .options { display: flex; flex-direction: column; gap: 10px; }
         .btn-option { background-color: white; border: 1px solid #bdc3c7; padding: 15px; font-size: 16px; color: #2f3640; border-radius: 10px; }
         .btn-option:hover:not(:disabled) { background-color: #ecf0f1; }
         .btn-option.correct { background-color: #badc58 !important; color: white; border-color: #badc58; }
         .btn-option.wrong { background-color: #ff7979 !important; color: white; border-color: #ff7979; }
         
-        /* 직접 입력(주관식) 모드 */
         .typing-container { display: none; flex-direction: column; gap: 10px; }
         .type-input { padding: 15px; font-size: 18px; border: 2px solid #bdc3c7; border-radius: 10px; text-align: center; font-weight: bold; outline: none; }
         .type-input:focus { border-color: #8e44ad; }
@@ -54,7 +52,6 @@
         .btn-next { background-color: #2ecc71; color: white; width: 100%; padding: 15px; font-size: 18px; border-radius: 10px; margin-top: 15px; display: none; }
         .btn-restart { background-color: #8e44ad; color: white; width: 100%; padding: 15px; font-size: 18px; border-radius: 10px; margin-top: 15px; display: none; }
 
-        /* 오답 노트 모달(팝업) 스타일 */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; box-sizing: border-box;}
         .modal-content { background: white; width: 100%; max-width: 400px; border-radius: 12px; padding: 20px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 4px 15px rgba(0,0,0,0.2);}
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px;}
@@ -79,18 +76,19 @@
 
 <div class="app-container">
     <div class="header-top">
-        <h1 class="app-title">Master Voca</h1>
+        <h1 class="app-title">마스터 영단어</h1>
         <button class="btn-review-modal" onclick="openReviewModal()">📝 오답 노트</button>
     </div>
 
     <div class="controls">
         <select id="daySelect">
             <option value="전체 랜덤">전체 랜덤</option>
-            <option value="DAY 20">DAY 20</option>
-            <option value="DAY 19">DAY 19</option>
-            <option value="DAY 18">DAY 18</option>
-            <option value="DAY 17">DAY 17</option>
-            <option value="DAY 16">DAY 16</option>
+            <script>
+                for(let i=1; i<=30; i++) {
+                    let d = i < 10 ? '0'+i : i;
+                    document.write(`<option value="DAY ${d}">DAY ${d}</option>`);
+                }
+            </script>
         </select>
         <select id="modeSelect">
             <option value="en2ko">영어 ➔ 한글 (선택)</option>
@@ -149,46 +147,149 @@
             <span class="review-count" id="reviewCountText">총 0 단어</span>
             <button class="btn-start-review-test" id="startReviewTestBtn" onclick="startReviewTest()">🚀 오답 테스트 시작</button>
         </div>
-        <div class="review-list" id="reviewList">
-            </div>
+        <div class="review-list" id="reviewList"></div>
     </div>
 </div>
 
 <script>
-    // 1. 단어 데이터 세팅 (DAY 16~20)
+    // 1. 단어 데이터 세팅 (DAY 01 ~ 30)
     const VOCAB_LIST = [
-        ["DAY 20", "traffic", "교통, 통행, 운송량"], ["DAY 20", "major", "주요한, 대다수의; 전공"], ["DAY 20", "route", "길, 통로, 노선"], ["DAY 20", "rush", "돌진하다, 재촉하다; 돌진"], ["DAY 20", "vehicle", "차량, 운송 수단"],
-        ["DAY 20", "transport", "운송하다, 수송하다"], ["DAY 20", "utilize", "이용하다, 활용하다"], ["DAY 20", "remote", "외딴, 먼; 리모컨"], ["DAY 20", "leap", "껑충 뛰다, 도약"], ["DAY 20", "leak", "(물이) 새다; 누출"],
-        ["DAY 20", "guess", "추측하다, 짐작하다"], ["DAY 20", "temperature", "온도, 체온"], ["DAY 20", "passage", "통로, 복도; 구절"], ["DAY 20", "flat", "평평한, 바람 빠진"], ["DAY 20", "enormous", "거대한, 엄청난"],
-        ["DAY 20", "accurate", "정확한"], ["DAY 20", "freeze", "얼다, 얼리다; 동결"], ["DAY 20", "gear", "장비, 기어"], ["DAY 20", "fuel", "연료; 연료를 공급하다"], ["DAY 20", "miss", "놓치다, 그리워하다"],
-        ["DAY 20", "license", "면허, 허가증"], ["DAY 20", "construction", "건설, 건축"], ["DAY 20", "wireless", "무선의"], ["DAY 20", "nevertheless", "그럼에도 불구하고"], ["DAY 20", "barrier", "장벽, 울타리; 장애물"],
-        ["DAY 20", "lift", "들어올리다; 승강기"], ["DAY 20", "curved", "곡선의, 구부러진"], ["DAY 20", "eliminate", "제거하다, 없애다"], ["DAY 20", "commit", "저지르다, 약속하다; (활동 등에) 전념하다"], ["DAY 20", "commute", "통근하다, 통근"],
-        ["DAY 20", "drag", "끌다, 끌고 가다"], ["DAY 20", "fasten", "고정하다, 잠그다"], ["DAY 20", "precise", "정확한, 정밀한"], ["DAY 20", "vital", "필수적인, 생명과 관련된"], ["DAY 20", "component", "구성 요소, 부품"],
-        ["DAY 20", "seldom", "거의 ~않는"], ["DAY 20", "enhance", "향상시키다, 강화하다"], ["DAY 20", "sink", "가라앉다; 싱크대"], ["DAY 20", "destination", "목적지, 도착지"], ["DAY 20", "station", "역, 정거장; 배치하다"],
-        ["DAY 19", "modern", "현대의, 최신의"], ["DAY 19", "mobile", "이동식의, 기동성의, 이동전화"], ["DAY 19", "function", "기능, 작용, 의식; 기능하다, 역할을 하다"], ["DAY 19", "machine", "기계, 장치"], ["DAY 19", "repair", "수리, 수선; 수리하다, 고치다"],
-        ["DAY 19", "efficient", "능률적인, 효율적인"], ["DAY 19", "install", "설치하다, 장착하다"], ["DAY 19", "innovation", "혁신, 쇄신"], ["DAY 19", "trust", "신뢰하다, 믿다; 신뢰, 신임"], ["DAY 19", "truth", "진실, 사실"],
-        ["DAY 19", "imagine", "상상하다, 가정하다"], ["DAY 19", "artificial", "인공의, 인위적인"], ["DAY 19", "adjust", "맞추다, 조정하다, 적응하다"], ["DAY 19", "ideal", "이상적인, 최상의; 이상향"], ["DAY 19", "gather", "모으다, 수집하다"],
-        ["DAY 19", "mechanic", "정비사, 기계공"], ["DAY 19", "portable", "휴대용의, 이동이 쉬운"], ["DAY 19", "remove", "제거하다, 치우다"], ["DAY 19", "master", "달인, 대가; 숙달하다"], ["DAY 19", "screen", "화면, 칸막이; 심사하다, 막다"],
-        ["DAY 19", "widespread", "광범위한, 널리 보급된"], ["DAY 19", "edge", "가장자리, 모서리"], ["DAY 19", "remind", "상기시키다, 생각나게 하다"], ["DAY 19", "acquire", "습득하다, 얻다"], ["DAY 19", "interact", "상호 작용하다"],
-        ["DAY 19", "scatter", "흩뿌리다, 흩어지다"], ["DAY 19", "virtual", "사실상의, 가상의"], ["DAY 19", "convert", "바꾸다, 전환하다"], ["DAY 19", "ease", "쉬움, 용이함; 덜어주다"], ["DAY 19", "erase", "지우다, 삭제하다"],
-        ["DAY 19", "navigate", "항해하다, 길을 찾다"], ["DAY 19", "reproduce", "재생하다, 번식하다"], ["DAY 19", "differ", "다르다, 구별되다"], ["DAY 19", "instruction", "지시, 설명, 사용설명서"], ["DAY 19", "significant", "중요한, 의미 있는"],
-        ["DAY 19", "satellite", "위성"], ["DAY 19", "demonstrate", "증명하다, 시연하다"], ["DAY 19", "emerge", "나타나다, 출현하다"], ["DAY 19", "trigger", "방아쇠; 유발하다"], ["DAY 19", "current", "현재의, 지금의; 흐름, 경향"],
-        ["DAY 18", "stomach", "배, 위, 복부"], ["DAY 18", "pill", "알약, 약"], ["DAY 18", "thumb", "엄지손가락"], ["DAY 18", "wound", "상처, 부상; 상처를 입히다"], ["DAY 18", "therapy", "치료, 요법"],
-        ["DAY 18", "surgery", "수술"], ["DAY 18", "physician", "의사"], ["DAY 18", "positive", "긍정적인, 확신하는"], ["DAY 18", "grab", "잡다, 움켜잡다"], ["DAY 18", "grip", "악력, 잡는 힘; 꽉 잡다"],
-        ["DAY 18", "prevent", "예방하다, 막다"], ["DAY 18", "suffer", "고통받다, 시달리다"], ["DAY 18", "ruin", "파괴하다, 망치다"], ["DAY 18", "organ", "기관, 장기"], ["DAY 18", "instead", "대신에"],
-        ["DAY 18", "ankle", "발목"], ["DAY 18", "nutrition", "영양(학), 영양분"], ["DAY 18", "decrease", "감소하다"], ["DAY 18", "trouble", "문제, 곤란"], ["DAY 18", "seal", "밀봉하다; 바다표범"],
-        ["DAY 18", "track", "자국, 흔적; 추적하다"], ["DAY 18", "perhaps", "아마도"], ["DAY 18", "bump", "부딪히다, 충돌"], ["DAY 18", "alert", "기민한, 경계하는; 경보"], ["DAY 18", "slip", "미끄러지다"],
-        ["DAY 18", "modest", "겸손한, 적당한"], ["DAY 18", "disabled", "장애가 있는"], ["DAY 18", "injure", "부상 입히다"], ["DAY 18", "rapid", "빠른, 신속한"], ["DAY 18", "spin", "회전하다"],
-        ["DAY 18", "spare", "여분의; 아끼다"], ["DAY 18", "beat", "이기다, 치다"], ["DAY 18", "indifferent", "무관심한"], ["DAY 18", "sew", "바느질하다"], ["DAY 18", "antibiotic", "항생제"],
-        ["DAY 18", "chronic", "만성의"], ["DAY 18", "sight", "시력, 시야"], ["DAY 18", "fatal", "치명적인"], ["DAY 18", "tremble", "떨다"], ["DAY 18", "patient", "환자; 인내심 있는"],
-        ["DAY 17", "biology", "생물학"], ["DAY 17", "gene", "유전자"], ["DAY 17", "factor", "요인, 요소"], ["DAY 17", "trace", "자국, 자취; 추적하다"], ["DAY 17", "require", "필요로 하다"],
-        ["DAY 17", "structure", "구조, 조직"], ["DAY 17", "research", "연구, 조사"], ["DAY 17", "intelligent", "지능이 있는"], ["DAY 17", "sign", "징후, 표시"], ["DAY 17", "sigh", "한숨을 쉬다"],
-        ["DAY 17", "insect", "곤충"], ["DAY 17", "circumstance", "상황, 환경"], ["DAY 17", "normal", "정상적인"], ["DAY 17", "threat", "위협"], ["DAY 17", "improve", "향상시키다"],
-        ["DAY 17", "repeat", "반복하다"], ["DAY 17", "resemble", "닮다"], ["DAY 17", "protein", "단백질"], ["DAY 17", "hatch", "부화하다"], ["DAY 17", "direct", "직접적인; 지시하다"],
-        ["DAY 17", "individual", "개인, 개인의"], ["DAY 17", "silent", "조용한"], ["DAY 17", "fiber", "섬유"], ["DAY 17", "ancestor", "조상"], ["DAY 17", "yawn", "하품하다"],
-        ["DAY 17", "pregnant", "임신한"], ["DAY 17", "stimulate", "자극하다"], ["DAY 17", "slightly", "약간"], ["DAY 17", "bleed", "피를 흘리다"], ["DAY 17", "breed", "번식하다"],
-        ["DAY 17", "crawl", "기어가다"], ["DAY 17", "sensation", "감각"], ["DAY 17", "sequence", "연속, 순서"], ["DAY 17", "blink", "깜빡이다"], ["DAY 17", "interfere", "간섭하다"],
-        ["DAY 17", "identical", "똑같은"], ["DAY 17", "empathy", "공감"], ["DAY 17", "dramatic", "극적인"], ["DAY 17", "explicit", "명백한"], ["DAY 17", "tissue", "조직"],
+        // DAY 01 [cite: 8-11]
+        ["DAY 01", "chore", "(집안)일, 잡일"], ["DAY 01", "laundry", "세탁물, 세탁일"], ["DAY 01", "flavor", "맛, 풍미"], ["DAY 01", "recipe", "요리법, 레시피"], ["DAY 01", "beverage", "음료, 마실 것"],
+        ["DAY 01", "operate", "작동하다, 운영하다, 수술하다"], ["DAY 01", "edible", "식용의, 먹을 수 있는"], ["DAY 01", "shelf", "선반"], ["DAY 01", "quite", "꽤, 상당히"], ["DAY 01", "quiet", "조용한, 고요한"],
+        ["DAY 01", "sweep", "쓸다, 청소하다"], ["DAY 01", "glance", "흘끗 보다, 대충 훑어보다"], ["DAY 01", "match", "어울리다, 맞다; 경기"], ["DAY 01", "furniture", "가구, 비품"], ["DAY 01", "manual", "설명서, 소책자; 수동의"],
+        ["DAY 01", "value", "가치, 중요성"], ["DAY 01", "pot", "냄비, 솥"], ["DAY 01", "grocery", "식료품, 잡화"], ["DAY 01", "striped", "줄무늬의"], ["DAY 01", "mind", "마음; 유의하다"],
+        ["DAY 01", "receipt", "영수증, 수령"], ["DAY 01", "bitter", "쓴, 쓰라린"], ["DAY 01", "appearance", "외모, 모습, 출현"], ["DAY 01", "iron", "다리미; 철"], ["DAY 01", "palm", "손바닥, 야자나무"],
+        ["DAY 01", "fancy", "화려한, 값비싼"], ["DAY 01", "soak", "적시다, 담그다"], ["DAY 01", "appeal", "매력, 호소"], ["DAY 01", "compare", "비교하다, 비유하다"], ["DAY 01", "compel", "강요하다"],
+        ["DAY 01", "browse", "둘러보다, 훑어보다"], ["DAY 01", "appetite", "식욕, 욕구"], ["DAY 01", "shut", "닫다, 감다"], ["DAY 01", "tender", "부드러운, 상냥한"], ["DAY 01", "pour", "붓다, 따르다"],
+        ["DAY 01", "lean", "기대다, 의지하다"], ["DAY 01", "temporary", "임시의, 일시적인"], ["DAY 01", "cottage", "오두막집, 작은집"], ["DAY 01", "minute", "분; 미세한"],
+        // DAY 02 [cite: 12-17]
+        ["DAY 02", "active", "적극적인, 활동적인"], ["DAY 02", "excellent", "훌륭한, 우수한"], ["DAY 02", "lecture", "강의, 강연"], ["DAY 02", "academic", "학문적인, 학업의"], ["DAY 02", "encourage", "북돋아 주다, 장려하다"],
+        ["DAY 02", "debate", "토론, 논쟁"], ["DAY 02", "president", "회장, 대통령"], ["DAY 02", "assignment", "과제, 임무, 할당"], ["DAY 02", "principal", "교장; 주요한"], ["DAY 02", "principle", "원칙, 원리"],
+        ["DAY 02", "graduate", "졸업하다; 졸업생"], ["DAY 02", "sense", "감, 감각; 느끼다"], ["DAY 02", "real", "진짜인, 실제의"], ["DAY 02", "annual", "연례의, 매년의"], ["DAY 02", "collect", "모으다, 수집하다"],
+        ["DAY 02", "deadline", "마감일, 기한"], ["DAY 02", "confident", "자신감이 있는, 확신하는"], ["DAY 02", "include", "포함하다, 함유하다"], ["DAY 02", "shout", "소리치다, 외치다"], ["DAY 02", "subject", "주제; 과목; 대상"],
+        ["DAY 02", "participate", "참여하다, 참가하다"], ["DAY 02", "auditorium", "강당, 객석"], ["DAY 02", "inform", "알려주다, 통지하다"], ["DAY 02", "duty", "의무, 임무, 세금"], ["DAY 02", "evaluate", "평가하다, 감정하다"],
+        ["DAY 02", "minimum", "최소; 최소의"], ["DAY 02", "introduction", "도입, 소개"], ["DAY 02", "photograph", "사진; 사진을 찍다"], ["DAY 02", "council", "의회, 협회"], ["DAY 02", "conceal", "숨기다, 은폐하다"],
+        ["DAY 02", "session", "시간, 기간"], ["DAY 02", "strict", "엄격한, 엄밀한"], ["DAY 02", "twist", "삐다, 비틀리다"], ["DAY 02", "spill", "쏟다, 흘리다"], ["DAY 02", "union", "연합회, 협회, 결합"],
+        ["DAY 02", "maximum", "최대의, 최고의"], ["DAY 02", "semester", "학기"], ["DAY 02", "ceiling", "천장"], ["DAY 02", "stationery", "문방구, 문구류"], ["DAY 02", "term", "기간, 조건, 용어, 학기"],
+        // DAY 03 [cite: 18-20]
+        ["DAY 03", "journey", "여행, 여정"], ["DAY 03", "theater", "극장, 영화관"], ["DAY 03", "fee", "요금, 수수료"], ["DAY 03", "prepare", "준비하다, 대비하다"], ["DAY 03", "surprised", "놀란"],
+        ["DAY 03", "receive", "받다, 얻다"], ["DAY 03", "nervous", "긴장한, 불안해하는"], ["DAY 03", "stage", "무대, 단계"], ["DAY 03", "vacation", "방학, 휴가"], ["DAY 03", "vocation", "직업, 천직, 소명"],
+        ["DAY 03", "pack", "짐을 싸다, 포장하다"], ["DAY 03", "host", "주최하다; 주인"], ["DAY 03", "private", "개인의, 사적인"], ["DAY 03", "craft", "공예(품); 정교하게 만들다"], ["DAY 03", "post", "게시하다, 발송하다"],
+        ["DAY 03", "relieve", "풀다, 완화시키다"], ["DAY 03", "practice", "연습하다; 관행"], ["DAY 03", "souvenir", "기념품, 선물"], ["DAY 03", "decorate", "꾸미다, 장식하다"], ["DAY 03", "book", "예약하다; 책"],
+        ["DAY 03", "reserve", "예약하다; 비축"], ["DAY 03", "wrap", "포장하다, 싸다"], ["DAY 03", "occasion", "경우, 기회, 행사"], ["DAY 03", "allow", "허락하다, 용납하다"], ["DAY 03", "ensure", "확실하게 하다"],
+        ["DAY 03", "agent", "대리인, 중개상"], ["DAY 03", "argue", "주장하다, 말다툼하다"], ["DAY 03", "confirm", "확인하다, 확정하다"], ["DAY 03", "wonder", "궁금해하다; 놀라움"], ["DAY 03", "wander", "돌아다니다, 헤매다"],
+        ["DAY 03", "capital", "수도, 자본금"], ["DAY 03", "absolute", "절대적인, 완전한"], ["DAY 03", "anticipate", "예상하다, 예측하다"], ["DAY 03", "leisure", "여가, 레저"], ["DAY 03", "undergo", "받다, 겪다"],
+        ["DAY 03", "spare", "여가의, 남는; 내어주다"], ["DAY 03", "aquarium", "수족관"], ["DAY 03", "applaud", "갈채를 보내다"], ["DAY 03", "insurance", "보험, 보험금"], ["DAY 03", "return", "반납하다, 되돌아오다"],
+        // DAY 04
+        ["DAY 04", "career", "경력, 직장 생활, 직업"], ["DAY 04", "skill", "기량, 기술"], ["DAY 04", "task", "일, 과업"], ["DAY 04", "tend", "~하는 경향이 있다"], ["DAY 04", "position", "직책, 자리, 위치"],
+        ["DAY 04", "hire", "고용하다, 쓰다"], ["DAY 04", "quit", "그만두다"], ["DAY 04", "proud", "자부심이 강한, 자랑스러운"], ["DAY 04", "labor", "노동, 업무, 분만"], ["DAY 04", "label", "붙이다; 상표, 표시"],
+        ["DAY 04", "familiar", "익숙한, 친숙한"], ["DAY 04", "spread", "퍼뜨리다, 펼치다; 확산"], ["DAY 04", "divide", "나누다, 분할하다, 분류하다"], ["DAY 04", "retire", "은퇴하다, 퇴직하다"], ["DAY 04", "vision", "시력, 시야, 환상"],
+        ["DAY 04", "obstacle", "장애물, 장애, 방해물"], ["DAY 04", "contrary", "반대인, 다른"], ["DAY 04", "arrange", "준비하다, 정렬하다"], ["DAY 04", "attempt", "시도하다; 시도, 기도"], ["DAY 04", "board", "판; 타다; 게시판"],
+        ["DAY 04", "presentation", "발표, 제출"], ["DAY 04", "accomplish", "해내다, 성취하다"], ["DAY 04", "convince", "설득하다, 확신시키다"], ["DAY 04", "audience", "청중, 시청자"], ["DAY 04", "wage", "임금, 급료"],
+        ["DAY 04", "previous", "이전의, 바로 앞의"], ["DAY 04", "spend", "들이다, 쓰다"], ["DAY 04", "distinguish", "구분하다, 식별하다"], ["DAY 04", "former", "전의, 과거의"], ["DAY 04", "formal", "공식적인, 정중한"],
+        ["DAY 04", "envious", "부러운, 선망하는"], ["DAY 04", "vice", "부의; 범죄, 악"], ["DAY 04", "architect", "건축가, 설계자"], ["DAY 04", "relevant", "관련된, 적절한"], ["DAY 04", "enthusiasm", "열정, 열의, 감격"],
+        ["DAY 04", "desirable", "바람직한, 매력 있는"], ["DAY 04", "dismiss", "해고하다, 해산시키다"], ["DAY 04", "competent", "유능한, 능숙한"], ["DAY 04", "memorize", "외우다, 암기하다"], ["DAY 04", "fix", "고치다, 정하다"],
+        // DAY 05 [cite: 23]
+        ["DAY 05", "muscle", "근육, 근력"], ["DAY 05", "regular", "정기적인, 규칙적인"], ["DAY 05", "stretch", "스트레칭을 하다, 늘이다"], ["DAY 05", "reduce", "줄이다, 낮추다"], ["DAY 05", "opponent", "적수, 상대"],
+        ["DAY 05", "recommend", "권하다, 추천하다"], ["DAY 05", "warn", "경고하다, 주의를 주다"], ["DAY 05", "cause", "일으키다; 원인"], ["DAY 05", "lose", "지다, 잃어버리다"], ["DAY 05", "loose", "느슨한, 헐거운"],
+        ["DAY 05", "rather", "차라리, 오히려"], ["DAY 05", "straight", "똑바로, 곧은"], ["DAY 05", "meanwhile", "한편, 그동안에"], ["DAY 05", "continuous", "지속적인, 끊임없는"], ["DAY 05", "ordinary", "보통의, 일상적인"],
+        ["DAY 05", "relationship", "관계, 관련성"], ["DAY 05", "throat", "목, 목구멍"], ["DAY 05", "encounter", "맞닥뜨리다, 부딪히다"], ["DAY 05", "disturb", "방해하다, 어지럽히다"], ["DAY 05", "lead", "이끌다, 이어지다; 납"],
+        ["DAY 05", "capable", "~할 수 있는, 유능한"], ["DAY 05", "proper", "올바른, 적절한"], ["DAY 05", "frequent", "자주 발생하는, 빈번한"], ["DAY 05", "symptom", "증상, 징후"], ["DAY 05", "monitor", "관찰하다; 화면"],
+        ["DAY 05", "consume", "섭취하다, 소모하다"], ["DAY 05", "struggle", "고생하다, 분투하다"], ["DAY 05", "strengthen", "강화시키다, 증강하다"], ["DAY 05", "slide", "미끄러지다; 미끄럼틀"], ["DAY 05", "slice", "조각; 썰다"],
+        ["DAY 05", "sufficient", "충분한, 흡족한"], ["DAY 05", "fulfill", "이루다, 실현하다"], ["DAY 05", "suggest", "제안하다, 암시하다"], ["DAY 05", "fatigue", "피로, 피곤"], ["DAY 05", "intake", "섭취(량), 흡입"],
+        ["DAY 05", "pace", "속도, 걸음"], ["DAY 05", "disorder", "장애, 무질서"], ["DAY 05", "flexible", "유연한, 융통성 있는"], ["DAY 05", "supplement", "보충(제); 보충하다"], ["DAY 05", "physical", "신체의, 육체의, 물리적인"],
+        // DAY 06 [cite: 27]
+        ["DAY 06", "relax", "긴장을 풀다"], ["DAY 06", "grateful", "고마워하는, 감사하는"], ["DAY 06", "complain", "불평하다, 항의하다"], ["DAY 06", "delighted", "기쁜, 아주 즐거운"], ["DAY 06", "express", "표현하다; 급행의"],
+        ["DAY 06", "reward", "보상, 사례금"], ["DAY 06", "frustrated", "좌절한, 실망한"], ["DAY 06", "recognize", "인식하다, 인정하다"], ["DAY 06", "temper", "성질, 성미"], ["DAY 06", "temple", "사찰, 절, 사원"],
+        ["DAY 06", "object", "물건, 물체; 반대하다"], ["DAY 06", "disappointed", "실망한, 낙담한"], ["DAY 06", "anxious", "불안한, 걱정하는"], ["DAY 06", "insist", "고집하다, 주장하다"], ["DAY 06", "sudden", "갑작스러운, 뜻밖의"],
+        ["DAY 06", "immediate", "즉각적인, 직접의"], ["DAY 06", "appreciate", "감사하다, 진가를 알아보다"], ["DAY 06", "pale", "창백한, 핼쑥한"], ["DAY 06", "purpose", "목적, 의도"], ["DAY 06", "race", "경주하다; 인종"],
+        ["DAY 06", "discouraged", "낙담한, 낙심한"], ["DAY 06", "stare", "응시하다, 빤히 쳐다보다"], ["DAY 06", "burst", "터뜨리다, 터지다"], ["DAY 06", "miserable", "비참한, 불쌍한"], ["DAY 06", "embarrassed", "당황한, 창피한"],
+        ["DAY 06", "hardly", "거의 ~하지 않다"], ["DAY 06", "panic", "당황하다; 공포"], ["DAY 06", "correspond", "일치하다, 서신을 주고받다"], ["DAY 06", "cruel", "잔인한, 잔혹한"], ["DAY 06", "crucial", "매우 중요한, 결정적인"],
+        ["DAY 06", "isolated", "고립된, 외딴"], ["DAY 06", "awkward", "어색한, 곤란한"], ["DAY 06", "sympathy", "동정(심), 연민"], ["DAY 06", "terrifying", "무시무시한, 놀라게 하는"], ["DAY 06", "optimistic", "낙관적인, 낙천적인"],
+        ["DAY 06", "sincere", "성실한, 진실된"], ["DAY 06", "likely", "가능성이 있는; 아마"], ["DAY 06", "endure", "견디다, 참다"], ["DAY 06", "cognitive", "인지의, 인식의"], ["DAY 06", "reflect", "반사하다, 반영하다"],
+        // DAY 07 [cite: 32]
+        ["DAY 07", "similar", "비슷한, 닮은"], ["DAY 07", "situation", "상황, 위치"], ["DAY 07", "related", "관련이 있는, 친족의"], ["DAY 07", "suppose", "생각하다, 가정하다"], ["DAY 07", "social", "사회적인, 사회의"],
+        ["DAY 07", "unique", "특별한, 독특한"], ["DAY 07", "prefer", "선호하다, 더 좋아하다"], ["DAY 07", "remain", "유지하다; 나머지"], ["DAY 07", "distract", "흐트러뜨리다, 산만하게 하다"], ["DAY 07", "district", "지역, 구역"],
+        ["DAY 07", "apologize", "사과하다, 변명하다"], ["DAY 07", "refer", "나타내다, 가리키다, 참조하다"], ["DAY 07", "colleague", "동료"], ["DAY 07", "rely", "의지하다, 신뢰하다"], ["DAY 07", "mistake", "실수; 오해하다"],
+        ["DAY 07", "request", "요청, 요구사항"], ["DAY 07", "assume", "생각하다, 가정하다"], ["DAY 07", "refuse", "거절하다, 거부하다"], ["DAY 07", "reply", "답장, 대답"], ["DAY 07", "degree", "정도, 등급, 학위"],
+        ["DAY 07", "capacity", "능력, 수용력"], ["DAY 07", "passion", "열정, 격정"], ["DAY 07", "surround", "둘러싸다, 에워싸다"], ["DAY 07", "indeed", "정말, 참으로, 실제로"], ["DAY 07", "imitate", "모방하다, 흉내 내다"],
+        ["DAY 07", "bond", "유대(감), 끈"], ["DAY 07", "obtain", "얻다, 획득하다"], ["DAY 07", "precious", "소중한, 값비싼"], ["DAY 07", "contribute", "기여하다, 기부하다"], ["DAY 07", "distribute", "나눠주다, 분배하다"],
+        ["DAY 07", "reject", "거절하다, 거부하다"], ["DAY 07", "gaze", "시선, 응시"], ["DAY 07", "cherish", "소중히 간직하다, 아끼다"], ["DAY 07", "hospitality", "환대, 접대"], ["DAY 07", "uncover", "폭로하다, 뚜껑을 열다"],
+        ["DAY 07", "casual", "격식을 차리지 않은, 무심한"], ["DAY 07", "mutual", "상호 간의, 서로의"], ["DAY 07", "farewell", "송별, 작별"], ["DAY 07", "owe", "신세를 지다, 빚지다"], ["DAY 07", "treat", "대우하다, 다루다, 치료하다"],
+        // DAY 08 [cite: 35]
+        ["DAY 08", "comment", "의견, 논평; 비평하다"], ["DAY 08", "popular", "인기가 있는, 대중적인"], ["DAY 08", "develop", "개발하다, 발전하다"], ["DAY 08", "moment", "잠시, 잠깐"], ["DAY 08", "public", "대중의, 공공의"],
+        ["DAY 08", "promise", "약속하다; 전망"], ["DAY 08", "select", "선택하다, 선발하다"], ["DAY 08", "pleasure", "즐거움, 기쁨"], ["DAY 08", "involve", "관련있다, 참여시키다"], ["DAY 08", "evolve", "진화하다, 서서히 발전하다"],
+        ["DAY 08", "range", "범위, 영역"], ["DAY 08", "stuff", "물건, 물질"], ["DAY 08", "journal", "일기, 잡지, 학술지"], ["DAY 08", "describe", "묘사하다, 서술하다"], ["DAY 08", "otherwise", "~하지 않으면, 그 외에는"],
+        ["DAY 08", "share", "공유하다, 나누다"], ["DAY 08", "jealous", "질투하는, 시기가 많은"], ["DAY 08", "translate", "번역하다, 통역하다"], ["DAY 08", "nod", "고개를 끄덕이다"], ["DAY 08", "mean", "의미하다; 수단; 비열한"],
+        ["DAY 08", "conclude", "마치다, 결론을 내리다"], ["DAY 08", "intend", "의도하다, 의미하다"], ["DAY 08", "worth", "~의 가치가 있는"], ["DAY 08", "outcome", "결과, 성과"], ["DAY 08", "honor", "영광, 명예; 존경하다"],
+        ["DAY 08", "internal", "내적인, 내부의"], ["DAY 08", "verbal", "언어의, 말로 된"], ["DAY 08", "besides", "게다가, 뿐만 아니라"], ["DAY 08", "cure", "치료하다, 치유하다"], ["DAY 08", "core", "핵심, 중심부"],
+        ["DAY 08", "strike", "두드려 치다; 파업"], ["DAY 08", "channel", "수단, 방법, 경로, 수로"], ["DAY 08", "gratitude", "감사, 고마움"], ["DAY 08", "metaphor", "은유, 비유"], ["DAY 08", "interpret", "해석하다, 이해하다"],
+        ["DAY 08", "insult", "모욕하다, 욕보이다"], ["DAY 08", "weird", "이상한, 기이한"], ["DAY 08", "random", "무작위의"], ["DAY 08", "remark", "말, 발언, 주목; 언급하다"], ["DAY 08", "sentence", "문장, 글; 판결하다"],
+        // DAY 09 [cite: 39]
+        ["DAY 09", "just", "정의로운, 공정한; 바로"], ["DAY 09", "moral", "도덕적인, 도의상의 교훈"], ["DAY 09", "peer", "또래, 동년배"], ["DAY 09", "achieve", "성취하다, 이루다"], ["DAY 09", "path", "길, 통로"],
+        ["DAY 09", "necessary", "필수적인, 필요한"], ["DAY 09", "selfish", "이기적인"], ["DAY 09", "penalty", "벌칙, 처벌"], ["DAY 09", "adopt", "취하다, 채택하다, 입양하다"], ["DAY 09", "adapt", "적응하다, 맞추다"],
+        ["DAY 09", "pause", "잠시 멈추다"], ["DAY 09", "incentive", "장려책, 동기"], ["DAY 09", "sacrifice", "희생하다; 희생(물)"], ["DAY 09", "generous", "후한, 너그러운"], ["DAY 09", "appropriate", "적절한, 알맞은"],
+        ["DAY 09", "chase", "추격하다, 뒤쫓다"], ["DAY 09", "deserve", "누릴 자격이 있다"], ["DAY 09", "pretend", "하는 척하다, 가장하다"], ["DAY 09", "neglect", "무시하다, 방치하다"], ["DAY 09", "lie", "눕다; 거짓말하다; 있다"],
+        ["DAY 09", "devote", "바치다, 헌신하다"], ["DAY 09", "admit", "인정하다, 허락하다"], ["DAY 09", "gender", "성별, 성"], ["DAY 09", "permit", "허용하다, 허락하다"], ["DAY 09", "spouse", "배우자, 남편, 아내"],
+        ["DAY 09", "ultimate", "궁극적인, 최후의"], ["DAY 09", "cheat", "부정행위를 하다, 속이다"], ["DAY 09", "extraordinary", "특별한, 비범한"], ["DAY 09", "ethnic", "민족의, 종족의"], ["DAY 09", "ethical", "윤리적인, 도덕적인"],
+        ["DAY 09", "fundamental", "필수적인, 근본적인"], ["DAY 09", "alter", "바꾸다, 수정하다"], ["DAY 09", "instinct", "본능, 직감"], ["DAY 09", "volunteer", "자원봉사자; 자원하다"], ["DAY 09", "conscious", "의식하는, 지각이 있는"],
+        ["DAY 09", "tempt", "유혹하다, 부추기다"], ["DAY 09", "humble", "겸손한, 소박한"], ["DAY 09", "ashamed", "부끄러운, 창피한"], ["DAY 09", "prejudice", "편견, 선입관"], ["DAY 09", "order", "주문하다; 순서; 질서"],
+        // DAY 10 [cite: 47]
+        ["DAY 10", "welfare", "복지, 안녕"], ["DAY 10", "victim", "피해자, 희생자"], ["DAY 10", "population", "인구, 주민"], ["DAY 10", "neighbor", "이웃"], ["DAY 10", "ignore", "무시하다, 묵살하다"],
+        ["DAY 10", "donate", "기부하다, 기증하다"], ["DAY 10", "serious", "심각한, 중대한"], ["DAY 10", "fund", "기금, 자금"], ["DAY 10", "personal", "개인의, 개인적인"], ["DAY 10", "personnel", "인사과, 직원"],
+        ["DAY 10", "half", "절반, 반"], ["DAY 10", "concern", "걱정, 관심; 관계가 있다"], ["DAY 10", "rescue", "구조, 구출; 구조하다"], ["DAY 10", "critic", "비평가, 평론가"], ["DAY 10", "charity", "자선, 자선단체"],
+        ["DAY 10", "rage", "분노, 격노"], ["DAY 10", "afford", "여유가 있다"], ["DAY 10", "unite", "단결하다, 연합하다"], ["DAY 10", "orphan", "고아"], ["DAY 10", "bear", "견디다; 낳다, 출산하다"],
+        ["DAY 10", "abandon", "버리다, 유기하다"], ["DAY 10", "crash", "충돌, 추락; 충돌하다"], ["DAY 10", "promote", "홍보하다, 증진시키다"], ["DAY 10", "decade", "10년"], ["DAY 10", "establish", "설립하다, 수립하다"],
+        ["DAY 10", "burden", "부담, 짐"], ["DAY 10", "assist", "돕다, 원조하다"], ["DAY 10", "resolve", "해결하다, 결심하다"], ["DAY 10", "detect", "탐지하다, 발견하다"], ["DAY 10", "defeat", "패배시키다; 패배"],
+        ["DAY 10", "capture", "붙잡다, 포획하다"], ["DAY 10", "perspective", "관점, 시각, 원근법"], ["DAY 10", "desperate", "필사적인, 절망적인"], ["DAY 10", "apparent", "겉으로 보이는, 명백한"], ["DAY 10", "contradict", "모순되다, 반박하다"],
+        ["DAY 10", "aggressive", "공격적인, 적극적인"], ["DAY 10", "companion", "친구, 동반자"], ["DAY 10", "compromise", "타협하다; 타협, 양보"], ["DAY 10", "commitment", "약속, 헌신"], ["DAY 10", "stock", "재고(품), 주식"],
+        // DAY 11 [cite: 50]
+        ["DAY 11", "publish", "출판하다, 발행하다"], ["DAY 11", "literature", "문학, 문헌"], ["DAY 11", "fiction", "소설, 허구"], ["DAY 11", "author", "작가, 저자"], ["DAY 11", "symbol", "상징, 부호"],
+        ["DAY 11", "plot", "줄거리, 구성, 음모"], ["DAY 11", "collaborate", "협력하다"], ["DAY 11", "statue", "조각상"], ["DAY 11", "state", "상태; 말하다"], ["DAY 11", "status", "지위, 신분, 상태"],
+        ["DAY 11", "fit", "어울리다, 맞다"], ["DAY 11", "movement", "운동, 움직임"], ["DAY 11", "brilliant", "훌륭한, 뛰어난"], ["DAY 11", "prior", "이전의, 앞의"], ["DAY 11", "outline", "윤곽, 개요"],
+        ["DAY 11", "sort", "종류, 유형; 분류하다"], ["DAY 11", "portrait", "초상화, 인물사진"], ["DAY 11", "tale", "이야기, 설화"], ["DAY 11", "add", "더하다, 추가하다"], ["DAY 11", "volume", "양, 용량; 권"],
+        ["DAY 11", "wisdom", "지혜, 슬기"], ["DAY 11", "impressed", "깊은 인상을 받은"], ["DAY 11", "emphasize", "강조하다"], ["DAY 11", "bold", "과감한, 선명한, 굵은"], ["DAY 11", "admire", "감탄하다, 존경하다"],
+        ["DAY 11", "vivid", "선명한, 생생한"], ["DAY 11", "multiple", "여러, 다수의"], ["DAY 11", "profound", "깊은, 심오한"], ["DAY 11", "terrible", "형편없는, 끔찍한"], ["DAY 11", "terrific", "아주 멋진, 훌륭한"],
+        ["DAY 11", "calculate", "계산하다, 추정하다"], ["DAY 11", "opportunity", "기회"], ["DAY 11", "poetry", "시, 시가"], ["DAY 11", "recall", "회상하다, 기억해내다"], ["DAY 11", "inferior", "열등한, 하위의"],
+        ["DAY 11", "spirit", "영혼, 정신"], ["DAY 11", "fade", "시들해지다, 바래다"], ["DAY 11", "generation", "세대, 발생"], ["DAY 11", "masterpiece", "작품, 걸작"], ["DAY 11", "figure", "수치, 인물"],
+        // DAY 12 [cite: 51]
+        ["DAY 12", "perform", "공연하다, 수행하다"], ["DAY 12", "feature", "특징, 기능; 출연하다"], ["DAY 12", "genre", "장르, 유형"], ["DAY 12", "instrument", "악기, 기구"], ["DAY 12", "broadcast", "방송하다, 방영하다"],
+        ["DAY 12", "artwork", "예술작품, 미술품"], ["DAY 12", "suit", "어울리다, 맞다; 정장"], ["DAY 12", "inspire", "영감을 주다, 고무하다"], ["DAY 12", "belief", "신념, 믿음"], ["DAY 12", "brief", "간단한, 잠깐의"],
+        ["DAY 12", "upset", "화가 난, 속상한"], ["DAY 12", "respond", "반응하다, 대답하다"], ["DAY 12", "steady", "안정된, 꾸준한"], ["DAY 12", "dislike", "싫어하다"], ["DAY 12", "define", "정의하다, 규정하다"],
+        ["DAY 12", "celebrity", "유명인, 연예인"], ["DAY 12", "genius", "천재, 천재성"], ["DAY 12", "visual", "시각의, 눈에 보이는"], ["DAY 12", "compose", "작곡하다, 구성하다"], ["DAY 12", "deal", "다루다, 거래하다"],
+        ["DAY 12", "poll", "투표, 여론조사"], ["DAY 12", "pitch", "음높이, 음조"], ["DAY 12", "eager", "열망하는"], ["DAY 12", "silly", "우스꽝스러운, 어리석은"], ["DAY 12", "furious", "분노하는, 격노한"],
+        ["DAY 12", "barely", "거의 ~하지 않게, 간신히"], ["DAY 12", "thrill", "황홀하게 만들다; 전율"], ["DAY 12", "particular", "특정한, 특별한"], ["DAY 12", "constant", "끊임없는, 불변의"], ["DAY 12", "consistent", "일치하는, 한결같은"],
+        ["DAY 12", "illusion", "환상, 착각"], ["DAY 12", "employ", "사용하다, 고용하다"], ["DAY 12", "funeral", "장례식"], ["DAY 12", "whisper", "속삭이다"], ["DAY 12", "elaborate", "정교한; 자세히 설명하다"],
+        ["DAY 12", "bunch", "많은 수, 묶음, 다발"], ["DAY 12", "atmosphere", "분위기, 대기"], ["DAY 12", "escape", "도망가다, 탈출하다"], ["DAY 12", "cultivate", "재배하다, 구축하다"], ["DAY 12", "cast", "던지다; 출연진"],
+        // DAY 13 [cite: 58]
+        ["DAY 13", "represent", "대표하다, 나타내다"], ["DAY 13", "exhibit", "전시회; 전시하다"], ["DAY 13", "minister", "장관, 성직자"], ["DAY 13", "vary", "다르다, 다양하다"], ["DAY 13", "tribe", "부족, 종족"],
+        ["DAY 13", "community", "공동체, 지역사회"], ["DAY 13", "consider", "고려하다, 숙고하다"], ["DAY 13", "concept", "개념, 생각"], ["DAY 13", "pray", "기도하다, 기원하다"], ["DAY 13", "prey", "먹이, 사냥감"],
+        ["DAY 13", "myth", "신화"], ["DAY 13", "attitude", "태도, 자세"], ["DAY 13", "priest", "성직자, 사제"], ["DAY 13", "approve", "인정하다, 찬성하다"], ["DAY 13", "carve", "조각하다, 새기다"],
+        ["DAY 13", "primitive", "원시의, 초기의"], ["DAY 13", "invade", "침략하다, 침해하다"], ["DAY 13", "arise", "생기다, 일어나다"], ["DAY 13", "register", "등록하다, 신고하다"], ["DAY 13", "custom", "관습, 풍습; 세관"],
+        ["DAY 13", "punish", "벌주다, 처벌하다"], ["DAY 13", "tie", "매다, 묶다"], ["DAY 13", "indicate", "나타내다, 시사하다"], ["DAY 13", "humor", "유머, 해학"], ["DAY 13", "stack", "쌓다; 더미"],
+        ["DAY 13", "odd", "이상한, 특이한"], ["DAY 13", "persist", "지속되다, 고집하다"], ["DAY 13", "insight", "통찰(력), 간파"], ["DAY 13", "outstanding", "뛰어난, 두드러진"], ["DAY 13", "novel", "소설; 새로운"],
+        ["DAY 13", "noble", "귀족; 고결한, 숭고한"], ["DAY 13", "hesitate", "주저하다, 망설이다"], ["DAY 13", "resist", "저항하다, 반대하다"], ["DAY 13", "protest", "항의하다, 반대하다"], ["DAY 13", "associate", "연상하다, 결합시키다"],
+        ["DAY 13", "restore", "복원하다, 회복시키다"], ["DAY 13", "restriction", "제한, 규제"], ["DAY 13", "heritage", "유산, 전통"], ["DAY 13", "perceive", "인식하다, 지각하다"], ["DAY 13", "scale", "저울, 눈금, 규모"],
+        // DAY 14 [cite: 81]
+        ["DAY 14", "ancient", "고대의, 먼 옛날의"], ["DAY 14", "tradition", "전통, 관례"], ["DAY 14", "origin", "기원, 근원"], ["DAY 14", "folk", "민속의, 전통적인"], ["DAY 14", "device", "기구, 장치"],
+        ["DAY 14", "ordinary", "일반적인, 평상시의"], ["DAY 14", "ritual", "의식, 의례"], ["DAY 14", "entire", "온, 전체의"], ["DAY 14", "region", "지역, 지방"], ["DAY 14", "religion", "종교"],
+        ["DAY 14", "record", "기록, 음반; 기록하다"], ["DAY 14", "settle", "정착하다, 해결하다"], ["DAY 14", "occupation", "점유, 직업"], ["DAY 14", "mass", "다량, 다수; 대량의"], ["DAY 14", "tap", "두드리다; 수도"],
+        ["DAY 14", "grasp", "파악하다, 꽉 잡다"], ["DAY 14", "fame", "명성, 평판"], ["DAY 14", "comfort", "위안, 위로, 편안함"], ["DAY 14", "hole", "구멍, 구덩이"], ["DAY 14", "succeed", "성공하다, 계승하다"],
+        ["DAY 14", "routine", "일과, 일상의 일"], ["DAY 14", "numerous", "수많은, 다수의"], ["DAY 14", "legend", "전설, 전설적 인물"], ["DAY 14", "military", "군사적인; 군대"], ["DAY 14", "weapon", "무기, 병기"],
+        ["DAY 14", "celebrate", "기념하다, 축하하다"], ["DAY 14", "combat", "전투, 투쟁; 싸우다"], ["DAY 14", "historical", "역사적인, 역사상의"], ["DAY 14", "royal", "왕의, 국왕의"], ["DAY 14", "loyal", "충성스러운, 성실한"],
+        ["DAY 14", "harvest", "수확물, 수확하다"], ["DAY 14", "illustrate", "설명하다, 보여주다"], ["DAY 14", "dare", "감히 ~하다"], ["DAY 14", "voyage", "항해, 여행"], ["DAY 14", "conventional", "전통적인, 관습적인"],
+        ["DAY 14", "contemporary", "현대의, 당대의"], ["DAY 14", "revolution", "혁명, 변혁"], ["DAY 14", "cooperation", "협조, 협력"], ["DAY 14", "conquer", "정복하다, 이기다"], ["DAY 14", "stable", "안정적인; 마구간"],
+        // DAY 15 [cite: 63]
+        ["DAY 15", "university", "대학"], ["DAY 15", "education", "교육"], ["DAY 15", "focus", "집중하다; 초점"], ["DAY 15", "entry", "참가, 입장"], ["DAY 15", "medical", "의학의, 의료의"],
+        ["DAY 15", "accept", "받아들이다, 인정하다"], ["DAY 15", "pioneer", "선구자, 개척자"], ["DAY 15", "mathematics", "수학, 계산"], ["DAY 15", "professor", "교수"], ["DAY 15", "profession", "직종, 직업"],
+        ["DAY 15", "theory", "이론, 학설"], ["DAY 15", "philosophy", "철학"], ["DAY 15", "method", "방식, 방법"], ["DAY 15", "praise", "칭찬; 칭찬하다"], ["DAY 15", "standard", "표준의; 기준"],
+        ["DAY 15", "character", "인격, 등장인물"], ["DAY 15", "throw", "던지다"], ["DAY 15", "psychology", "심리학, 심리"], ["DAY 15", "intention", "의도, 목적"], ["DAY 15", "apply", "지원하다, 바르다"],
+        ["DAY 15", "tune", "조율하다; 곡, 선율"], ["DAY 15", "submit", "제출하다, 항복하다"], ["DAY 15", "logical", "논리적인, 타당한"], ["DAY 15", "blame", "비난하다; 책임"], ["DAY 15", "display", "드러내다, 전시하다"],
+        ["DAY 15", "likewise", "똑같이, 마찬가지로"], ["DAY 15", "discipline", "훈육; 훈련하다"], ["DAY 15", "boost", "북돋우다, 신장시키다"], ["DAY 15", "shallow", "얕은, 피상적인"], ["DAY 15", "swallow", "삼키다, 다 없애다"],
+        ["DAY 15", "bias", "편견, 편향"], ["DAY 15", "string", "끈, 줄; 묶다"], ["DAY 15", "examination", "검토, 검사, 조사"], ["DAY 15", "rational", "합리적인, 이성적인"], ["DAY 15", "laboratory", "실험실"],
+        ["DAY 15", "authority", "권위, 권한, 당국"], ["DAY 15", "misunderstanding", "오해, 착오"], ["DAY 15", "pursue", "추구하다, 쫓다"], ["DAY 15", "deprived", "불우한, 박탈당한"], ["DAY 15", "spell", "철자를 쓰다; 마법"],
+        // DAY 16 [cite: 1]
         ["DAY 16", "nature", "자연, 본질"], ["DAY 16", "experiment", "실험하다, 시험"], ["DAY 16", "condition", "상태, 조건"], ["DAY 16", "distance", "거리, 간격"], ["DAY 16", "evidence", "증거"],
         ["DAY 16", "chemical", "화학의, 화학물질"], ["DAY 16", "fluid", "액체, 유체"], ["DAY 16", "extensive", "광범위한, 많은"], ["DAY 16", "process", "과정, 처리하다"], ["DAY 16", "progress", "진보, 발전"],
         ["DAY 16", "planet", "행성"], ["DAY 16", "conduct", "행동하다; 지휘하다"], ["DAY 16", "solid", "고체; 단단한"], ["DAY 16", "eternal", "영원한"], ["DAY 16", "gravity", "중력"],
@@ -196,7 +297,133 @@
         ["DAY 16", "acid", "산성의"], ["DAY 16", "orbit", "궤도, 궤도를 돌다"], ["DAY 16", "toxic", "독성의"], ["DAY 16", "liquid", "액체"], ["DAY 16", "universe", "우주"],
         ["DAY 16", "reverse", "뒤집다, 반전시키다"], ["DAY 16", "extend", "확장하다"], ["DAY 16", "expand", "확장되다, 팽창하다"], ["DAY 16", "preserve", "보존하다"], ["DAY 16", "vapor", "증기"],
         ["DAY 16", "invisible", "보이지 않는"], ["DAY 16", "substance", "물질"], ["DAY 16", "particle", "입자"], ["DAY 16", "moisture", "수분"], ["DAY 16", "abstract", "추상적인"],
-        ["DAY 16", "valid", "유효한"], ["DAY 16", "invention", "발명품"], ["DAY 16", "stick", "막대기; 붙이다, 고수하다"], ["DAY 16", "atom", "원자"], ["DAY 16", "extent", "범위, 정도, 규모"]
+        ["DAY 16", "valid", "유효한"], ["DAY 16", "invention", "발명품"], ["DAY 16", "stick", "막대기; 붙이다"], ["DAY 16", "atom", "원자"], ["DAY 16", "extent", "범위, 정도"],
+        // DAY 17 [cite: 1]
+        ["DAY 17", "biology", "생물학"], ["DAY 17", "gene", "유전자"], ["DAY 17", "factor", "요인, 요소"], ["DAY 17", "trace", "자국; 추적하다"], ["DAY 17", "require", "필요로 하다"],
+        ["DAY 17", "structure", "구조, 조직"], ["DAY 17", "research", "연구, 조사"], ["DAY 17", "intelligent", "지능이 있는"], ["DAY 17", "sign", "징후, 표시"], ["DAY 17", "sigh", "한숨을 쉬다"],
+        ["DAY 17", "insect", "곤충"], ["DAY 17", "circumstance", "상황, 환경"], ["DAY 17", "normal", "정상적인"], ["DAY 17", "threat", "위협"], ["DAY 17", "improve", "향상시키다"],
+        ["DAY 17", "repeat", "반복하다"], ["DAY 17", "resemble", "닮다"], ["DAY 17", "protein", "단백질"], ["DAY 17", "hatch", "부화하다"], ["DAY 17", "direct", "직접적인; 지시하다"],
+        ["DAY 17", "individual", "개인, 개인의"], ["DAY 17", "silent", "조용한"], ["DAY 17", "fiber", "섬유"], ["DAY 17", "ancestor", "조상"], ["DAY 17", "yawn", "하품하다"],
+        ["DAY 17", "pregnant", "임신한"], ["DAY 17", "stimulate", "자극하다"], ["DAY 17", "slightly", "약간"], ["DAY 17", "bleed", "피를 흘리다"], ["DAY 17", "breed", "번식하다"],
+        ["DAY 17", "crawl", "기어가다"], ["DAY 17", "sensation", "감각"], ["DAY 17", "sequence", "연속, 순서"], ["DAY 17", "blink", "깜빡이다"], ["DAY 17", "interfere", "간섭하다"],
+        ["DAY 17", "identical", "똑같은"], ["DAY 17", "empathy", "공감"], ["DAY 17", "dramatic", "극적인"], ["DAY 17", "explicit", "명백한"], ["DAY 17", "tissue", "조직"],
+        // DAY 18 [cite: 1]
+        ["DAY 18", "stomach", "배, 위, 복부"], ["DAY 18", "pill", "알약, 약"], ["DAY 18", "thumb", "엄지손가락"], ["DAY 18", "wound", "상처; 상처를 입히다"], ["DAY 18", "therapy", "치료, 요법"],
+        ["DAY 18", "surgery", "수술"], ["DAY 18", "physician", "의사"], ["DAY 18", "positive", "긍정적인, 확신하는"], ["DAY 18", "grab", "잡다, 움켜잡다"], ["DAY 18", "grip", "악력, 잡는 힘; 꽉 잡다"],
+        ["DAY 18", "prevent", "예방하다, 막다"], ["DAY 18", "suffer", "고통받다, 시달리다"], ["DAY 18", "ruin", "파괴하다, 망치다"], ["DAY 18", "organ", "기관, 장기"], ["DAY 18", "instead", "대신에"],
+        ["DAY 18", "ankle", "발목"], ["DAY 18", "nutrition", "영양(학), 영양분"], ["DAY 18", "decrease", "감소하다"], ["DAY 18", "trouble", "문제, 곤란"], ["DAY 18", "seal", "밀봉하다; 바다표범"],
+        ["DAY 18", "track", "자국; 추적하다"], ["DAY 18", "perhaps", "아마도"], ["DAY 18", "bump", "부딪히다, 충돌"], ["DAY 18", "alert", "기민한; 경보"], ["DAY 18", "slip", "미끄러지다"],
+        ["DAY 18", "modest", "겸손한, 적당한"], ["DAY 18", "disabled", "장애가 있는"], ["DAY 18", "injure", "부상 입히다"], ["DAY 18", "rapid", "빠른, 신속한"], ["DAY 18", "spin", "회전하다"],
+        ["DAY 18", "spare", "여분의; 아끼다"], ["DAY 18", "beat", "이기다, 치다"], ["DAY 18", "indifferent", "무관심한"], ["DAY 18", "sew", "바느질하다"], ["DAY 18", "antibiotic", "항생제"],
+        ["DAY 18", "chronic", "만성의"], ["DAY 18", "sight", "시력, 시야"], ["DAY 18", "fatal", "치명적인"], ["DAY 18", "tremble", "떨다"], ["DAY 18", "patient", "환자; 인내심 있는"],
+        // DAY 19 [cite: 1]
+        ["DAY 19", "modern", "현대의, 최신의"], ["DAY 19", "mobile", "이동식의, 기동성의, 이동전화"], ["DAY 19", "function", "기능, 작용, 의식; 기능하다"], ["DAY 19", "machine", "기계, 장치"], ["DAY 19", "repair", "수리, 수선; 수리하다"],
+        ["DAY 19", "efficient", "능률적인, 효율적인"], ["DAY 19", "install", "설치하다, 장착하다"], ["DAY 19", "innovation", "혁신, 쇄신"], ["DAY 19", "trust", "신뢰하다, 믿다"], ["DAY 19", "truth", "진실, 사실"],
+        ["DAY 19", "imagine", "상상하다, 가정하다"], ["DAY 19", "artificial", "인공의, 인위적인"], ["DAY 19", "adjust", "맞추다, 조정하다"], ["DAY 19", "ideal", "이상적인, 최상의"], ["DAY 19", "gather", "모으다, 수집하다"],
+        ["DAY 19", "mechanic", "정비사, 기계공"], ["DAY 19", "portable", "휴대용의, 이동이 쉬운"], ["DAY 19", "remove", "제거하다, 치우다"], ["DAY 19", "master", "달인; 숙달하다"], ["DAY 19", "screen", "화면, 칸막이; 심사하다"],
+        ["DAY 19", "widespread", "광범위한, 널리 보급된"], ["DAY 19", "edge", "가장자리, 모서리"], ["DAY 19", "remind", "상기시키다, 생각나게 하다"], ["DAY 19", "acquire", "습득하다, 얻다"], ["DAY 19", "interact", "상호 작용하다"],
+        ["DAY 19", "scatter", "흩뿌리다, 흩어지다"], ["DAY 19", "virtual", "사실상의, 가상의"], ["DAY 19", "convert", "바꾸다, 전환하다"], ["DAY 19", "ease", "쉬움, 용이함; 덜어주다"], ["DAY 19", "erase", "지우다, 삭제하다"],
+        ["DAY 19", "navigate", "항해하다, 길을 찾다"], ["DAY 19", "reproduce", "재생하다, 번식하다"], ["DAY 19", "differ", "다르다, 구별되다"], ["DAY 19", "instruction", "지시, 설명, 사용설명서"], ["DAY 19", "significant", "중요한, 의미 있는"],
+        ["DAY 19", "satellite", "위성"], ["DAY 19", "demonstrate", "증명하다, 시연하다"], ["DAY 19", "emerge", "나타나다, 출현하다"], ["DAY 19", "trigger", "방아쇠; 유발하다"], ["DAY 19", "current", "현재의; 흐름, 경향"],
+        // DAY 20
+        ["DAY 20", "traffic", "교통, 통행, 운송량"], ["DAY 20", "major", "주요한, 대다수의; 전공"], ["DAY 20", "route", "길, 통로, 노선"], ["DAY 20", "rush", "돌진하다, 재촉하다; 돌진"], ["DAY 20", "vehicle", "차량, 운송 수단"],
+        ["DAY 20", "transport", "운송하다, 수송하다"], ["DAY 20", "utilize", "이용하다, 활용하다"], ["DAY 20", "remote", "외딴, 먼; 리모컨"], ["DAY 20", "leap", "껑충 뛰다, 도약"], ["DAY 20", "leak", "새다; 누출"],
+        ["DAY 20", "guess", "추측하다, 짐작하다"], ["DAY 20", "temperature", "온도, 체온"], ["DAY 20", "passage", "통로; 구절"], ["DAY 20", "flat", "평평한, 바람 빠진"], ["DAY 20", "enormous", "거대한, 엄청난"],
+        ["DAY 20", "accurate", "정확한"], ["DAY 20", "freeze", "얼다, 얼리다; 동결"], ["DAY 20", "gear", "장비, 기어"], ["DAY 20", "fuel", "연료; 연료를 공급하다"], ["DAY 20", "miss", "놓치다, 그리워하다"],
+        ["DAY 20", "license", "면허, 허가증"], ["DAY 20", "construction", "건설, 건축"], ["DAY 20", "wireless", "무선의"], ["DAY 20", "nevertheless", "그럼에도 불구하고"], ["DAY 20", "barrier", "장벽, 장애물"],
+        ["DAY 20", "lift", "들어올리다; 승강기"], ["DAY 20", "curved", "곡선의, 구부러진"], ["DAY 20", "eliminate", "제거하다, 없애다"], ["DAY 20", "commit", "전념하다, 저지르다"], ["DAY 20", "commute", "통근하다, 통근"],
+        ["DAY 20", "drag", "끌다, 끌고 가다"], ["DAY 20", "fasten", "고정하다, 잠그다"], ["DAY 20", "precise", "정확한, 정밀한"], ["DAY 20", "vital", "필수적인, 생명과 관련된"], ["DAY 20", "component", "구성 요소, 부품"],
+        ["DAY 20", "seldom", "거의 ~않는"], ["DAY 20", "enhance", "향상시키다, 강화하다"], ["DAY 20", "sink", "가라앉다; 싱크대"], ["DAY 20", "destination", "목적지, 도착지"], ["DAY 20", "station", "역, 정거장; 배치하다"],
+        // DAY 21 [cite: 85]
+        ["DAY 21", "wild", "야생의, 자연 그대로의"], ["DAY 21", "species", "종, 종류"], ["DAY 21", "bark", "(개가) 짖다"], ["DAY 21", "nest", "둥지, 보금자리"], ["DAY 21", "certain", "특정한, 확실한"],
+        ["DAY 21", "greet", "인사하다, 환영하다"], ["DAY 21", "seed", "씨(앗), 종자"], ["DAY 21", "predator", "포식자, 포식동물"], ["DAY 21", "scene", "현장, 장면, 경치"], ["DAY 21", "scent", "향기, 냄새"],
+        ["DAY 21", "shape", "모양, 형태; 형성하다"], ["DAY 21", "fierce", "사나운, 치열한"], ["DAY 21", "ripe", "익은, 숙성한"], ["DAY 21", "lay", "(알을) 낳다"], ["DAY 21", "male", "수컷의, 남자의"],
+        ["DAY 21", "foster", "기르다, 조성하다"], ["DAY 21", "surface", "표면, 겉, 외관"], ["DAY 21", "engage", "참여하다, 관여하다"], ["DAY 21", "location", "위치, 소재, 장소"], ["DAY 21", "store", "상점; 저장하다"],
+        ["DAY 21", "attract", "유혹하다, 끌어들이다"], ["DAY 21", "poison", "독, 독약; 독살하다"], ["DAY 21", "weigh", "무게가 나가다, 저울에 달다"], ["DAY 21", "automatic", "자동의, 기계적인"], ["DAY 21", "role", "역할, 배역"],
+        ["DAY 21", "exchange", "교환하다, 주고받다"], ["DAY 21", "contain", "포함하다, 함유하다"], ["DAY 21", "trail", "오솔길, 자취, 흔적"], ["DAY 21", "trait", "특징, 특색"], ["DAY 21", "trial", "시도, 도전, 재판"],
+        ["DAY 21", "overcome", "극복하다, 이기다"], ["DAY 21", "tiny", "작은, 조그마한"], ["DAY 21", "exceed", "넘다, 초과하다"], ["DAY 21", "bury", "파묻다, 매장하다"], ["DAY 21", "stem", "줄기, 대; 비롯되다"],
+        ["DAY 21", "diameter", "지름, 직경"], ["DAY 21", "fascinate", "매료하다, 마음을 사로잡다"], ["DAY 21", "furthermore", "게다가, 뿐만 아니라"], ["DAY 21", "concentrate", "집중하다, 전념하다"], ["DAY 21", "general", "일반적인, 보통의; 장군"],
+        // DAY 22 [cite: 88]
+        ["DAY 22", "ecosystem", "생태계"], ["DAY 22", "desert", "사막, 불모지; 버리다"], ["DAY 22", "creature", "생명체, 생물"], ["DAY 22", "mature", "다 자란, 어른스러운"], ["DAY 22", "habitat", "서식지, 거주지"],
+        ["DAY 22", "maintain", "유지하다, 지키다"], ["DAY 22", "tide", "조수, 조류, 흐름"], ["DAY 22", "balance", "균형, 평형상태"], ["DAY 22", "grand", "웅장한, 위대한"], ["DAY 22", "grant", "주다, 인정하다; 보조금"],
+        ["DAY 22", "huge", "거대한, 막대한"], ["DAY 22", "pile", "쌓다, 포개다; 더미"], ["DAY 22", "react", "반응하다, 반작용하다"], ["DAY 22", "exist", "존재하다, 살아가다"], ["DAY 22", "shade", "그늘, 빛 가리개"],
+        ["DAY 22", "element", "요소, 성분, 원소"], ["DAY 22", "layer", "층, 막, 단계"], ["DAY 22", "horizon", "수평선, 지평선"], ["DAY 22", "observe", "관찰하다, 목격하다"], ["DAY 22", "block", "덩어리, 블록; 막다"],
+        ["DAY 22", "reason", "원인, 이유"], ["DAY 22", "herd", "무리, 떼; 몰다"], ["DAY 22", "filter", "여과하다, 거르다"], ["DAY 22", "eco-friendly", "친환경의"], ["DAY 22", "portion", "일부, 부분, 1인분"],
+        ["DAY 22", "deadly", "치명적인, 극도의"], ["DAY 22", "tension", "긴장(감), 갈등"], ["DAY 22", "migrate", "이동하다, 이주하다"], ["DAY 22", "access", "접근하다; 접근, 접속"], ["DAY 22", "excess", "여분의; 과잉, 지나침"],
+        ["DAY 22", "expose", "드러내다, 노출시키다"], ["DAY 22", "shelter", "보호소, 대피소; 보호하다"], ["DAY 22", "absorb", "흡수하다, 받아들이다"], ["DAY 22", "incredible", "놀라운, 훌륭한"], ["DAY 22", "consist", "구성되다, 이루어지다"],
+        ["DAY 22", "peak", "정상, 봉우리, 정점"], ["DAY 22", "weed", "잡초; 잡초를 제거하다"], ["DAY 22", "scare", "겁먹게 하다; 두려움"], ["DAY 22", "diminish", "줄어들다, 약해지다"], ["DAY 22", "yield", "굴복하다, 산출하다; 수확"],
+        // DAY 23 [cite: 91]
+        ["DAY 23", "climate", "기후, 분위기"], ["DAY 23", "landscape", "풍경, 경치, 경관"], ["DAY 23", "storm", "폭풍, 폭풍우"], ["DAY 23", "average", "평균의, 보통의; 평균"], ["DAY 23", "drown", "익사시키다, 침수시키다"],
+        ["DAY 23", "happen", "발생하다, 일어나다"], ["DAY 23", "rough", "거친, 난폭한, 대강의"], ["DAY 23", "geography", "지리학, 지리, 지형"], ["DAY 23", "effect", "효과, 영향, 결과"], ["DAY 23", "affect", "영향을 미치다, 작용하다"],
+        ["DAY 23", "valley", "계곡, 골짜기"], ["DAY 23", "influence", "영향을 미치다; 영향"], ["DAY 23", "damage", "피해, 손상; 손해를 입히다"], ["DAY 23", "lack", "부족, 결핍; 부족하다"], ["DAY 23", "predict", "예측하다, 예보하다"],
+        ["DAY 23", "aware", "알고 있는, 깨달은"], ["DAY 23", "correct", "정확한, 맞는; 바로잡다"], ["DAY 23", "earthquake", "지진"], ["DAY 23", "due", "~으로 인한, 예정된"], ["DAY 23", "level", "수준, 위치, 수평면"],
+        ["DAY 23", "shift", "바뀌다, 옮기다; 변화"], ["DAY 23", "narrow", "좁은, 편협한; 좁히다"], ["DAY 23", "drought", "가뭄, 건조"], ["DAY 23", "boundary", "경계(선), 한계"], ["DAY 23", "alarming", "놀라운"],
+        ["DAY 23", "harsh", "혹독한, 가혹한, 거친"], ["DAY 23", "cease", "그치다, 중지하다"], ["DAY 23", "estimate", "예상하다, 추정하다; 견적"], ["DAY 23", "plane", "비행기, 평면; 평평한"], ["DAY 23", "plain", "평야; 꾸미지 않은"],
+        ["DAY 23", "forecast", "예보, 예측; 예보하다"], ["DAY 23", "incident", "사건, 일"], ["DAY 23", "continent", "대륙, 육지"], ["DAY 23", "spoil", "상하다, 망치다"], ["DAY 23", "tremendous", "엄청난, 대단한"],
+        ["DAY 23", "steep", "가파른, 비탈진, 급격한"], ["DAY 23", "territory", "영토, 영역"], ["DAY 23", "split", "나뉘다, 쪼개다; 갈라진"], ["DAY 23", "flash", "섬광, 번쩍임; 번쩍이다"], ["DAY 23", "deposit", "퇴적시키다, 예금하다; 매장량"],
+        // DAY 24 [cite: 94]
+        ["DAY 24", "resource", "자원, 재원, 수단"], ["DAY 24", "fossil", "화석"], ["DAY 24", "supply", "공급(량); 공급하다"], ["DAY 24", "common", "흔한, 공동의"], ["DAY 24", "explanation", "설명, 해석, 해명"],
+        ["DAY 24", "nuclear", "핵의, 원자력의"], ["DAY 24", "material", "재료, 물질, 자료"], ["DAY 24", "essential", "필수적인, 본질의"], ["DAY 24", "metal", "금속; 금속의"], ["DAY 24", "mental", "정신적인, 마음의"],
+        ["DAY 24", "solve", "해결하다, 풀다"], ["DAY 24", "survive", "생존하다, 견디다"], ["DAY 24", "source", "공급원, 원천, 출처"], ["DAY 24", "produce", "생산하다; 생산품"], ["DAY 24", "electronic", "전자의, 전자공학의"],
+        ["DAY 24", "coal", "석탄"], ["DAY 24", "benefit", "이점, 장점; 이익을 얻다"], ["DAY 24", "vacuum", "진공청소기, 진공(상태)"], ["DAY 24", "treasure", "보물, 귀중품; 소중히 하다"], ["DAY 24", "address", "주소; 연설하다, 해결하다"],
+        ["DAY 24", "shortage", "부족, 결핍"], ["DAY 24", "renewable", "재생 가능한"], ["DAY 24", "potential", "잠재력; 잠재적인"], ["DAY 24", "native", "토착의, 현지인"], ["DAY 24", "grain", "곡물, 곡식, 낱알"],
+        ["DAY 24", "extreme", "극단적인, 극도의"], ["DAY 24", "typical", "대표적인, 전형적인"], ["DAY 24", "contact", "연락하다, 접촉시키다; 연락"], ["DAY 24", "content", "콘텐츠, 내용물; 만족하는"], ["DAY 24", "context", "맥락, 문맥, 전후 관계"],
+        ["DAY 24", "aspect", "측면, 양상, 국면"], ["DAY 24", "float", "떠다니다, 뜨다"], ["DAY 24", "ingredient", "구성요소, 재료, 성분"], ["DAY 24", "ban", "규제, 금지; 금지하다"], ["DAY 24", "witness", "목격하다, 입증하다; 목격자"],
+        ["DAY 24", "solar", "태양의, 태양열을 이용한"], ["DAY 24", "starve", "굶주리다, 갈망하다"], ["DAY 24", "attribute", "~의 탓으로 돌리다; 속성"], ["DAY 24", "appliance", "가전제품, 기기"], ["DAY 24", "plant", "심다; 식물, 초목, 공장"],
+        // DAY 25 [cite: 97]
+        ["DAY 25", "environment", "환경, 주위"], ["DAY 25", "release", "배출하다; 발표, 개봉"], ["DAY 25", "disaster", "재난, 재해, 참사"], ["DAY 25", "destroy", "파괴하다, 망치다"], ["DAY 25", "waste", "쓰레기, 낭비; 낭비하다"],
+        ["DAY 25", "period", "기간, 시대, 마침표"], ["DAY 25", "announce", "알리다, 발표하다"], ["DAY 25", "occur", "발생하다, 생기다"], ["DAY 25", "quality", "질, 품질, 특성"], ["DAY 25", "quantity", "양, 수량, 다량"],
+        ["DAY 25", "protect", "보호하다, 막다"], ["DAY 25", "loss", "손실, 상실, 죽음"], ["DAY 25", "generate", "생산하다, 발생시키다"], ["DAY 25", "amazed", "놀란, 경악한"], ["DAY 25", "harm", "해를 끼치다; 피해, 손해"],
+        ["DAY 25", "intense", "강렬한, 심한, 열정적인"], ["DAY 25", "amount", "양, 총액"], ["DAY 25", "marine", "해양의, 바다의"], ["DAY 25", "permanent", "영구적인, 불변의"], ["DAY 25", "fine", "좋은, 미세한, 벌금"],
+        ["DAY 25", "pesticide", "살충제, 농약"], ["DAY 25", "alternative", "대안; 대체 가능한"], ["DAY 25", "respect", "존중하다, 존경하다; 존경심"], ["DAY 25", "vast", "엄청난, 막대한, 광활한"], ["DAY 25", "refreshing", "상쾌한, 신선한"],
+        ["DAY 25", "responsible", "책임이 있는, 원인이 되는"], ["DAY 25", "confuse", "혼란스럽게 하다, 혼동시키다"], ["DAY 25", "separate", "분리하다; 분리된, 각각의"], ["DAY 25", "delicate", "섬세한, 정교한, 연약한"], ["DAY 25", "dedicate", "헌신하다, 전념하다"],
+        ["DAY 25", "extinction", "멸종, 절멸"], ["DAY 25", "superior", "더 나은, 우수한, 우세한"], ["DAY 25", "consequence", "결과, 영향, 중요성"], ["DAY 25", "fabric", "직물, 천, 구조"], ["DAY 25", "interrupt", "방해하다, 가로막다"],
+        ["DAY 25", "concrete", "구체적인, 실제의, 콘크리트"], ["DAY 25", "acknowledge", "인정하다, 시인하다"], ["DAY 25", "considerable", "상당한, 중요한"], ["DAY 25", "discard", "버리다, 폐기하다"], ["DAY 25", "matter", "물질, 문제; 중요하다"],
+        // DAY 26 [cite: 111]
+        ["DAY 26", "legal", "법률의, 합법적인"], ["DAY 26", "obey", "지키다, 순종하다"], ["DAY 26", "arrest", "체포하다, 억류하다"], ["DAY 26", "report", "신고하다, 알리다; 보고서"], ["DAY 26", "innocent", "무죄인, 결백한, 순진한"],
+        ["DAY 26", "caution", "주의, 조심, 경고"], ["DAY 26", "charge", "청구하다, 맡기다; 요금, 책임"], ["DAY 26", "violate", "위반하다, 어기다, 침해하다"], ["DAY 26", "law", "법, 법률, 법칙"], ["DAY 26", "raw", "날것의, 가공되지 않은"],
+        ["DAY 26", "search", "수색, 검색; 수색하다"], ["DAY 26", "raise", "제기하다, 들어 올리다, 기르다"], ["DAY 26", "aim", "목적, 목표; 목표로 하다"], ["DAY 26", "criminal", "범죄자, 범인; 범죄의"], ["DAY 26", "suspect", "의심하다; 용의자"],
+        ["DAY 26", "neutral", "중립적인, 공평한"], ["DAY 26", "accuse", "비난하다, 고발하다"], ["DAY 26", "firm", "회사; 굳은, 확고한"], ["DAY 26", "aid", "돕다, 거들다; 원조, 지원"], ["DAY 26", "interest", "관심, 호기심, 이익, 이자"],
+        ["DAY 26", "complex", "복잡한, 뒤얽힌; 복합단지"], ["DAY 26", "organize", "정리하다, 조직하다, 준비하다"], ["DAY 26", "plenty", "많음, 다량, 풍부"], ["DAY 26", "phenomenon", "현상, 사건"], ["DAY 26", "mount", "오르다, 올라타다; 산, 언덕"],
+        ["DAY 26", "found", "설립하다, 기초를 세우다"], ["DAY 26", "prove", "입증하다, 증명하다"], ["DAY 26", "forbid", "금지하다, 용납하지 않다"], ["DAY 26", "contrast", "차이, 대조, 대비"], ["DAY 26", "contract", "계약(서); 계약하다"],
+        ["DAY 26", "stamp", "도장을 찍다; 도장, 우표"], ["DAY 26", "secure", "보호하다; 안전한, 확실한"], ["DAY 26", "conference", "회의, 학회, 협의"], ["DAY 26", "urge", "충동, 욕구; 촉구하다"], ["DAY 26", "confront", "맞서다, 직면하다"],
+        ["DAY 26", "persuade", "설득하다, 납득시키다"], ["DAY 26", "scan", "살피다, 꼼꼼하게 훑어보다"], ["DAY 26", "prohibit", "금지하다, 방해하다"], ["DAY 26", "moreover", "게다가, 더욱이"], ["DAY 26", "determine", "결정하다, 알아내다"],
+        // DAY 27 [cite: 115]
+        ["DAY 27", "politics", "정치(학)"], ["DAY 27", "facility", "시설, 기관, 설비"], ["DAY 27", "vote", "투표, 표; 투표하다"], ["DAY 27", "candidate", "후보(자), 지원자"], ["DAY 27", "civil", "시민의, 민간의"],
+        ["DAY 27", "limit", "제한, 한도, 한계; 제한하다"], ["DAY 27", "conservative", "보수의, 보수적인"], ["DAY 27", "belong", "속하다, 소속감을 느끼다"], ["DAY 27", "official", "공식적인; 공무원"], ["DAY 27", "officer", "직원, 관리, 장교"],
+        ["DAY 27", "result", "결과; 발생하다"], ["DAY 27", "survey", "설문조사; 조사하다"], ["DAY 27", "notice", "통지, 공고문; 알아차리다"], ["DAY 27", "guard", "경호하다; 경비요원"], ["DAY 27", "profit", "수익금, 이익; 이득을 얻다"],
+        ["DAY 27", "deny", "부인하다, 부정하다"], ["DAY 27", "opinion", "의견, 여론, 생각"], ["DAY 27", "rural", "시골의, 지방의"], ["DAY 27", "urban", "도시의, 도회지의"], ["DAY 27", "issue", "문제, 쟁점, 사안; 발급하다"],
+        ["DAY 27", "simplify", "단순화하다, 간소화하다"], ["DAY 27", "committee", "위원회"], ["DAY 27", "accompany", "동행하다, 동반하다"], ["DAY 27", "proportion", "비율, 부분, 규모"], ["DAY 27", "household", "가구, 가정; 가족의"],
+        ["DAY 27", "absence", "부재, 결석"], ["DAY 27", "primary", "주요한, 최초의"], ["DAY 27", "spot", "발견하다; 점, 얼룩, 지점"], ["DAY 27", "bother", "방해하다, 신경 쓰다"], ["DAY 27", "border", "국경, 경계, 가장자리"],
+        ["DAY 27", "available", "(이용) 가능한, 구할 수 있는"], ["DAY 27", "harbor", "항구, 항만; 정박하다"], ["DAY 27", "garage", "주차장, 차고"], ["DAY 27", "notion", "개념, 관념"], ["DAY 27", "suburb", "교외, 시외"],
+        ["DAY 27", "resident", "거주자, 주민, 투숙객"], ["DAY 27", "investigate", "조사하다, 수사하다"], ["DAY 27", "reinforce", "보강하다, 강화하다"], ["DAY 27", "govern", "통치하다, 다스리다"], ["DAY 27", "rate", "(비)율; 평가하다; 속도"],
+        // DAY 28 [cite: 108]
+        ["DAY 28", "economic", "경제의, 경제상의"], ["DAY 28", "budget", "예산, 비용; 예산을 세우다"], ["DAY 28", "possible", "가능한"], ["DAY 28", "income", "소득, 수입"], ["DAY 28", "crisis", "위기, 중대한 기로"],
+        ["DAY 28", "trade", "거래하다, 교환하다; 무역"], ["DAY 28", "offer", "제공하다; 제공, 제의"], ["DAY 28", "specific", "특정한, 구체적인"], ["DAY 28", "several", "몇몇의, 여러 가지의"], ["DAY 28", "severe", "심각한, 극심한, 엄격한"],
+        ["DAY 28", "invest", "투자하다; 쏟다"], ["DAY 28", "wealth", "부, 재산"], ["DAY 28", "provide", "제공하다, 공급하다"], ["DAY 28", "merchant", "상인, 무역상"], ["DAY 28", "finance", "재무, 재정; 자금을 대다"],
+        ["DAY 28", "derive", "얻다, 끌어내다, 비롯되다"], ["DAY 28", "credit", "신용; 믿다, 인정하다"], ["DAY 28", "substitute", "대체품, 대안; 대체하다"], ["DAY 28", "debt", "빚, 부채"], ["DAY 28", "bill", "지폐, 계산서, 청구서"],
+        ["DAY 28", "cancel", "취소하다, 무효화하다; 취소"], ["DAY 28", "replace", "교체하다, 대체하다, 바꾸다"], ["DAY 28", "property", "부동산, 재산, 소유물"], ["DAY 28", "refund", "환불, 환불금; 환불하다"], ["DAY 28", "branch", "지점, 지사, 나뭇가지"],
+        ["DAY 28", "recover", "회복하다, 되찾다"], ["DAY 28", "hardship", "어려움, 고난"], ["DAY 28", "assemble", "모이다, 집합시키다, 조립하다"], ["DAY 28", "proceed", "진행하다, 나아가다"], ["DAY 28", "precede", "선행하다, 앞서다"],
+        ["DAY 28", "stir", "불러일으키다, 젓다; 동요"], ["DAY 28", "independent", "독립적인, 자치적인"], ["DAY 28", "overall", "전반적인; 전반적으로"], ["DAY 28", "approach", "다가오다, 접촉하다; 접근"], ["DAY 28", "challenge", "과제, 도전; 도전하다"],
+        ["DAY 28", "impact", "영향을 미치다; 영향, 충격"], ["DAY 28", "accelerate", "가속하다, 촉진시키다"], ["DAY 28", "collapse", "실패하다, 무너지다; 붕괴"], ["DAY 28", "purchase", "구매하다; 구매, 구입한 것"], ["DAY 28", "account", "계좌, 계정; 설명하다"],
+        // DAY 29 [cite: 129]
+        ["DAY 29", "industry", "산업, 공업"], ["DAY 29", "policy", "방침, 정책, 보험증권"], ["DAY 29", "commercial", "상업의; 광고 방송"], ["DAY 29", "convey", "전달하다, 운송하다"], ["DAY 29", "international", "국제의, 국제적인"],
+        ["DAY 29", "reveal", "드러내다, 밝히다, 폭로하다"], ["DAY 29", "increase", "증가하다; 증가, 증대"], ["DAY 29", "depend", "의존하다, 의지하다"], ["DAY 29", "transfer", "갈아타다, 옮기다; 이동"], ["DAY 29", "transform", "변형시키다, 바꾸다"],
+        ["DAY 29", "launch", "출시하다, 시작하다"], ["DAY 29", "deliver", "배달하다, 연설하다, 출산하다"], ["DAY 29", "measure", "측정하다, 재다; 측정"], ["DAY 29", "claim", "주장하다, 요구하다; 주장"], ["DAY 29", "satisfy", "만족시키다, 충족시키다"],
+        ["DAY 29", "opposite", "반대의 사람; 반대의"], ["DAY 29", "strategy", "계획, 전략"], ["DAY 29", "import", "수입하다; 수입(품)"], ["DAY 29", "trap", "함정, 덫, 궁지; 가두다"], ["DAY 29", "present", "존재하는; 현재의; 선물"],
+        ["DAY 29", "consult", "상담하다, 상의하다"], ["DAY 29", "organic", "유기농의, 유기체의"], ["DAY 29", "manufacture", "제조하다, 생산하다; 제조"], ["DAY 29", "negative", "부정적인, 비관적인"], ["DAY 29", "peasant", "소작농, 영세농민"],
+        ["DAY 29", "agriculture", "농업"], ["DAY 29", "alter", "바꾸다, 변경하다"], ["DAY 29", "combine", "결합시키다, 연합시키다"], ["DAY 29", "compete", "경쟁하다, 겨루다"], ["DAY 29", "complete", "완료하다; 완성된, 완전한"],
+        ["DAY 29", "advance", "진보하다, 다가가다; 진보"], ["DAY 29", "imply", "시사하다, 암시하다"], ["DAY 29", "guarantee", "보장하다; 보증"], ["DAY 29", "chief", "주요한, 최고의 지배자"], ["DAY 29", "thrive", "번창하다, 번성하다"],
+        ["DAY 29", "gain", "얻다, 획득하다; 증가, 이득"], ["DAY 29", "overlook", "간과하다, 못 본 체하다"], ["DAY 29", "disappear", "사라지다, 없어지다"], ["DAY 29", "initial", "처음의; 초기; 머리글자"], ["DAY 29", "domestic", "국내의, 가정의, 집안의"],
+        // DAY 30 [cite: 133]
+        ["DAY 30", "magazine", "잡지"], ["DAY 30", "article", "기사, 글, 조항"], ["DAY 30", "press", "언론, 신문사; 누르다"], ["DAY 30", "advertise", "광고하다, 선전하다"], ["DAY 30", "recent", "최근의, 근래의"],
+        ["DAY 30", "diverse", "다양한, 여러 가지의"], ["DAY 30", "document", "문서; 기록하다; 입증하다"], ["DAY 30", "expert", "전문가, 숙련가"], ["DAY 30", "explore", "탐험하다, 조사하다"], ["DAY 30", "explode", "(폭탄이) 터지다, 폭발하다"],
+        ["DAY 30", "handle", "다루다, 처리하다; 손잡이"], ["DAY 30", "phrase", "문구, 구절, 관용구"], ["DAY 30", "annoy", "짜증나게 하다"], ["DAY 30", "obvious", "분명한, 확실한"], ["DAY 30", "mention", "언급하다, 말하다"],
+        ["DAY 30", "entertain", "즐겁게 하다, 대접하다"], ["DAY 30", "detail", "세부 사항, 세부 묘사"], ["DAY 30", "conflict", "갈등, 충돌; 상충하다"], ["DAY 30", "thus", "따라서, 이와 같이"], ["DAY 30", "medium", "중간의; 매체; 수단"],
+        ["DAY 30", "depress", "우울하게 하다, 낙담시키다"], ["DAY 30", "demand", "요구하다, 필요로 하다; 요구"], ["DAY 30", "identify", "확인하다, 알아보다"], ["DAY 30", "award", "상; 수여하다, 주다"], ["DAY 30", "regret", "후회하다; 후회, 유감"],
+        ["DAY 30", "regard", "여기다, 간주하다; 관심"], ["DAY 30", "inquire", "질문하다, 알아보다"], ["DAY 30", "script", "대본, 각본"], ["DAY 30", "decline", "쇠퇴, 감소; 감소하다"], ["DAY 30", "declare", "선언하다, 선포하다"],
+        ["DAY 30", "deceive", "기만하다, 속이다"], ["DAY 30", "external", "외부의, 밖의"], ["DAY 30", "instantly", "즉시, 즉각적으로"], ["DAY 30", "norm", "표준, 기준, 규범"], ["DAY 30", "analyze", "분석하다, 해석하다"],
+        ["DAY 30", "clarify", "명확히 하다, 분명히 말하다"], ["DAY 30", "defend", "지키다, 방어하다, 변호하다"], ["DAY 30", "reputation", "평판, 명성"], ["DAY 30", "exclude", "제외하다, 차단하다"], ["DAY 30", "net", "망; 순수"]
     ];
 
     // 상태 변수
@@ -209,7 +436,7 @@
     let currentExampleEng = "";
     let score = 0;
     let isQuestionResolved = false; 
-    let isReviewTestMode = false; // 현재 오답 테스트 모드인지 여부
+    let isReviewTestMode = false;
     
     // DOM 요소
     const daySelect = document.getElementById('daySelect');
@@ -234,7 +461,7 @@
     const shadowBtn = document.getElementById('shadowBtn');
     const quizCard = document.getElementById('quizCard');
 
-    // 이벤트 리스너 등록
+    // 이벤트 리스너
     daySelect.addEventListener('change', () => { isReviewTestMode = false; resetAndLoad(); });
     modeSelect.addEventListener('change', resetAndLoad);
     saveBtn.addEventListener('click', () => saveToReview(currentWord.eng, currentWord.kor, false));
@@ -242,8 +469,7 @@
     speakExBtn.addEventListener('click', () => speakText(currentExampleEng));
     shadowBtn.addEventListener('click', toggleShadowing);
     
-    // 엔터키 입력 처리
-    document.addEventListener('keydown', function(e) {
+    document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             if (!isQuestionResolved && modeSelect.value === 'ko2en_type' && document.activeElement === typeInput) {
                 checkAnswerTyping();
@@ -253,32 +479,22 @@
         }
     });
 
-    // 초기화 및 세션 로드 (일반 모드 또는 오답 테스트 모드 분기)
     function resetAndLoad() {
         let pool = [];
-        
         if (isReviewTestMode) {
-            // 오답 테스트 모드일 경우: 로컬스토리지에서 오답 리스트 가져오기
             let savedWords = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
             if(savedWords.length === 0) {
-                alert("저장된 오답이 없습니다. 일반 모드로 돌아갑니다.");
+                alert("저장된 오답이 없습니다.");
                 isReviewTestMode = false;
                 resetAndLoad();
                 return;
             }
             pool = savedWords.map(w => ({ eng: w.eng, kor: w.kor, day: "REVIEW" }));
-            daySelect.value = "전체 랜덤"; // 오답모드일땐 Day 선택 무효화 느낌 부여
         } else {
-            // 일반 모드일 경우
             const day = daySelect.value;
-            if (day === '전체 랜덤') {
-                pool = [...allWords];
-            } else {
-                pool = allWords.filter(w => w.day === day);
-            }
+            pool = (day === '전체 랜덤') ? [...allWords] : allWords.filter(w => w.day === day);
         }
         
-        // 단어 리스트 무작위 섞기 (Fisher-Yates Shuffle)
         for (let i = pool.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -304,16 +520,14 @@
 
     function nextQuestion() {
         if (sessionQueue.length === 0) {
-            // 모든 단어 학습 완료
             quizCard.style.display = 'none';
             optionsContainer.style.display = 'none';
             typingContainer.style.display = 'none';
             exampleArea.style.display = 'none';
-            feedbackLabel.innerHTML = isReviewTestMode ? "🎉 오답 복습을 모두 완료했습니다! 대단해요!" : "🎉 선택한 Day의 모든 단어를 학습했습니다!";
+            feedbackLabel.innerHTML = isReviewTestMode ? "🎉 오답 복습 완료!" : "🎉 학습 완료!";
             feedbackLabel.style.color = "#27ae60";
             nextBtn.style.display = 'none';
             restartBtn.style.display = 'block';
-            isReviewTestMode = false; // 끝나면 오답 모드 해제
             return;
         }
         
@@ -321,14 +535,12 @@
         currentWord = sessionQueue.pop(); 
         const mode = modeSelect.value;
         
-        // UI 초기화
         nextBtn.style.display = 'none';
         feedbackLabel.textContent = '';
         exampleArea.style.display = 'none';
         exampleTextDOM.innerHTML = '';
         currentExampleEng = "";
         
-        // 오답테스트 중일땐 이미 저장된 단어이므로 '저장됨' 표시
         if (isReviewTestMode) {
             saveBtn.textContent = '저장된 오답';
             saveBtn.disabled = true;
@@ -338,7 +550,6 @@
         }
         speakBtn.disabled = false;
         
-        // 모드별 화면 구성 설정
         if (mode === 'ko2en_type') {
             optionsContainer.style.display = 'none';
             typingContainer.style.display = 'flex';
@@ -347,58 +558,40 @@
             typeInput.className = 'type-input';
             typeSubmitBtn.disabled = false;
             typeInput.focus();
-            
             questionLabel.textContent = currentWord.kor;
             currentAnswer = currentWord.eng;
             speakBtn.disabled = true; 
         } else {
             optionsContainer.style.display = 'flex';
             typingContainer.style.display = 'none';
-            optionsBtns.forEach(btn => {
-                btn.className = 'btn-option';
-                btn.disabled = false;
-            });
+            optionsBtns.forEach(btn => { btn.className = 'btn-option'; btn.disabled = false; });
             
-            let allAnswersPool = [];
-            if (mode === 'en2ko') {
-                questionLabel.textContent = currentWord.eng;
-                currentAnswer = currentWord.kor;
-                allAnswersPool = allWords.map(w => w.kor);
-            } else {
-                questionLabel.textContent = currentWord.kor;
-                currentAnswer = currentWord.eng;
-                speakBtn.disabled = true;
-                allAnswersPool = allWords.map(w => w.eng);
-            }
+            let pool = (mode === 'en2ko') ? allWords.map(w => w.kor) : allWords.map(w => w.eng);
+            questionLabel.textContent = (mode === 'en2ko') ? currentWord.eng : currentWord.kor;
+            currentAnswer = (mode === 'en2ko') ? currentWord.kor : currentWord.eng;
+            if(mode !== 'en2ko') speakBtn.disabled = true;
 
-            // 보기 4개 생성 (전체 DB에서 랜덤 추출)
             let options = [currentAnswer];
             while (options.length < 4) {
-                let wrong = allAnswersPool[Math.floor(Math.random() * allAnswersPool.length)];
+                let wrong = pool[Math.floor(Math.random() * pool.length)];
                 if (!options.includes(wrong)) options.push(wrong);
             }
             options.sort(() => Math.random() - 0.5); 
-            optionsBtns.forEach((btn, index) => {
-                btn.textContent = options[index];
-            });
+            optionsBtns.forEach((btn, i) => { btn.textContent = options[i]; });
         }
     }
 
     function checkAnswerChoice(clickedBtn) {
         optionsBtns.forEach(btn => btn.disabled = true);
-        const isCorrect = (clickedBtn.textContent === currentAnswer);
-        processResult(isCorrect, clickedBtn);
+        processResult(clickedBtn.textContent === currentAnswer, clickedBtn);
     }
 
     function checkAnswerTyping() {
         const userText = typeInput.value.trim().toLowerCase();
         if (userText === '') return;
-        
         typeInput.disabled = true;
         typeSubmitBtn.disabled = true;
-        const isCorrect = (userText === currentAnswer.toLowerCase());
-        
-        processResult(isCorrect, null);
+        processResult(userText === currentAnswer.toLowerCase(), null);
     }
 
     function processResult(isCorrect, clickedBtn) {
@@ -413,168 +606,98 @@
             else typeInput.classList.add('correct');
             speakText(currentWord.eng);
             
-            // 오답 테스트 중에 맞췄다면? (삭제 유도 등의 로직 가능. 여기선 유지)
+            // ⭐ 정답 시 1.2초 후 자동 이동
+            setTimeout(() => { nextQuestion(); }, 1200);
+
         } else {
             feedbackLabel.innerHTML = `땡! 정답은: <span style="text-decoration: underline;">${currentAnswer}</span>`;
             feedbackLabel.style.color = "#c0392b";
             if(clickedBtn) {
                 clickedBtn.classList.add('wrong');
                 optionsBtns.forEach(btn => { if (btn.textContent === currentAnswer) btn.classList.add('correct'); });
-            } else {
-                typeInput.classList.add('wrong');
-            }
+            } else { typeInput.classList.add('wrong'); }
             if(!isReviewTestMode) saveToReview(currentWord.eng, currentWord.kor, true); 
+            nextBtn.style.display = 'block'; 
         }
         
         updateScoreBoard();
         fetchExample(currentWord.eng);
-        nextBtn.style.display = 'block';
     }
 
-    // 예문 API 호출
     async function fetchExample(word) {
         exampleArea.style.display = 'flex';
-        exampleTextDOM.innerHTML = "📝 예문과 해석을 불러오는 중...";
-        speakExBtn.disabled = true;
-        shadowBtn.disabled = true;
-        
+        exampleTextDOM.innerHTML = "📝 예문 로딩 중...";
         try {
             const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`);
-            if (!res.ok) throw new Error("Not found");
             const data = await res.json();
-            
-            let engSentence = "";
-            for (let meaning of data[0].meanings) {
-                for (let def of meaning.definitions) {
-                    if (def.example) {
-                        engSentence = def.example;
-                        break;
-                    }
-                }
-                if (engSentence) break;
+            let engEx = "";
+            for (let m of data[0].meanings) {
+                for (let d of m.definitions) { if (d.example) { engEx = d.example; break; } }
+                if (engEx) break;
             }
-            
-            if (engSentence) {
-                currentExampleEng = engSentence;
-                const transRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(engSentence)}&langpair=en|ko`);
+            if (engEx) {
+                currentExampleEng = engEx;
+                const transRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(engEx)}&langpair=en|ko`);
                 const transData = await transRes.json();
-                let korSentence = transData.responseData.translatedText;
-                
-                exampleTextDOM.innerHTML = `<strong>💡 예문:</strong> ${engSentence}<br><br><strong>🇰🇷 해석:</strong> ${korSentence}`;
-                speakExBtn.disabled = false;
-                shadowBtn.disabled = false;
-            } else {
-                exampleTextDOM.innerHTML = "💡 이 단어는 등록된 예문이 없습니다.";
-            }
-        } catch (error) {
-            exampleTextDOM.innerHTML = "💡 예문을 찾을 수 없거나 인터넷 연결 문제가 있습니다.";
-        }
+                exampleTextDOM.innerHTML = `<strong>💡 예문:</strong> ${engEx}<br><br><strong>🇰🇷 해석:</strong> ${transData.responseData.translatedText}`;
+                speakExBtn.disabled = false; shadowBtn.disabled = false;
+            } else { exampleTextDOM.innerHTML = "💡 예문이 없습니다."; }
+        } catch (e) { exampleTextDOM.innerHTML = "💡 예문을 불러오지 못했습니다."; }
     }
 
-    // ==========================================
-    // 오답 노트(Review) 관련 함수들
-    // ==========================================
     function saveToReview(eng, kor, isAuto) {
-        let savedWords = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
-        let exists = savedWords.find(w => w.eng === eng);
-        
-        if (exists) {
-            if (!isAuto) saveBtn.textContent = '이미 저장됨';
-        } else {
-            savedWords.push({ eng, kor, date: new Date().getTime() });
-            localStorage.setItem('myVocaReview', JSON.stringify(savedWords));
+        let saved = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
+        if (!saved.find(w => w.eng === eng)) {
+            saved.push({ eng, kor, date: new Date().getTime() });
+            localStorage.setItem('myVocaReview', JSON.stringify(saved));
             saveBtn.textContent = isAuto ? '자동 저장됨' : '✅ 저장 완료';
-        }
+        } else if (!isAuto) { saveBtn.textContent = '이미 저장됨'; }
         saveBtn.disabled = true;
     }
 
     function openReviewModal() {
-        const modal = document.getElementById('reviewModal');
         const listDiv = document.getElementById('reviewList');
-        const countText = document.getElementById('reviewCountText');
-        const startTestBtn = document.getElementById('startReviewTestBtn');
-        
-        let savedWords = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
-        savedWords.sort((a, b) => b.date - a.date);
-        
-        countText.textContent = `총 ${savedWords.length} 단어`;
-        
-        listDiv.innerHTML = '';
-        if (savedWords.length === 0) {
-            listDiv.innerHTML = '<div class="empty-msg">저장된 오답이 없습니다.<br>문제를 풀며 틀린 단어가 이곳에 쌓입니다.</div>';
-            startTestBtn.style.display = 'none'; // 오답이 없으면 테스트 버튼 숨김
-        } else {
-            startTestBtn.style.display = 'block'; // 오답이 있으면 테스트 버튼 표시
-            savedWords.forEach((word, index) => {
-                const item = document.createElement('div');
-                item.className = 'review-item';
-                item.innerHTML = `
-                    <div class="review-word-box">
-                        <span class="review-eng">${word.eng}</span>
-                        <span class="review-kor">${word.kor}</span>
-                    </div>
-                    <button class="btn-delete-review" onclick="deleteReviewWord('${word.eng}')">삭제</button>
-                `;
-                listDiv.appendChild(item);
-            });
-        }
-        modal.style.display = 'flex';
+        let saved = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
+        document.getElementById('reviewCountText').textContent = `총 ${saved.length} 단어`;
+        document.getElementById('startReviewTestBtn').style.display = (saved.length > 0) ? 'block' : 'none';
+        listDiv.innerHTML = saved.length ? '' : '<div class="empty-msg">저장된 오답이 없습니다.</div>';
+        saved.sort((a,b) => b.date - a.date).forEach(w => {
+            const item = document.createElement('div');
+            item.className = 'review-item';
+            item.innerHTML = `<div class="review-word-box"><span class="review-eng">${w.eng}</span><span class="review-kor">${w.kor}</span></div><button class="btn-delete-review" onclick="deleteReviewWord('${w.eng}')">삭제</button>`;
+            listDiv.appendChild(item);
+        });
+        document.getElementById('reviewModal').style.display = 'flex';
     }
 
-    function closeReviewModal() {
-        document.getElementById('reviewModal').style.display = 'none';
-    }
-
+    function closeReviewModal() { document.getElementById('reviewModal').style.display = 'none'; }
     function deleteReviewWord(eng) {
-        let savedWords = JSON.parse(localStorage.getItem('myVocaReview') || '[]');
-        savedWords = savedWords.filter(w => w.eng !== eng);
-        localStorage.setItem('myVocaReview', JSON.stringify(savedWords));
-        openReviewModal(); // 리스트 새로고침
+        let saved = JSON.parse(localStorage.getItem('myVocaReview') || '[]').filter(w => w.eng !== eng);
+        localStorage.setItem('myVocaReview', JSON.stringify(saved));
+        openReviewModal();
     }
-    
-    // ⭐ 오답 테스트 시작 함수
-    function startReviewTest() {
-        closeReviewModal();
-        isReviewTestMode = true; // 오답 모드 ON
-        resetAndLoad(); // 오답 데이터를 기반으로 세션 시작
-    }
+    function startReviewTest() { closeReviewModal(); isReviewTestMode = true; resetAndLoad(); }
 
-    // 모달 바깥 영역 클릭시 닫기
-    window.onclick = function(event) {
-        const modal = document.getElementById('reviewModal');
-        if (event.target === modal) {
-            closeReviewModal();
-        }
-    }
-
-    // TTS 및 STT
     function speakText(text) {
         if (!text) return;
         window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        window.speechSynthesis.speak(utterance);
+        const u = new SpeechSynthesisUtterance(text); u.lang = 'en-US';
+        window.speechSynthesis.speak(u);
     }
 
     let recognition;
     let isRecording = false;
     if ('webkitSpeechRecognition' in window) {
         recognition = new webkitSpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
-        recognition.onresult = function(event) { analyzeSpeech(event.results[0][0].transcript); resetShadowBtn(); };
-        recognition.onerror = function(event) { alert("마이크 인식 오류. 권한을 확인해주세요."); resetShadowBtn(); };
+        recognition.onresult = (e) => { analyzeSpeech(e.results[0][0].transcript); resetShadowBtn(); };
         recognition.onend = resetShadowBtn;
     }
 
     function toggleShadowing() {
-        if (!recognition) { alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome을 이용해주세요."); return; }
+        if (!recognition) { alert("음성 인식을 지원하지 않는 브라우저입니다."); return; }
         if (isRecording) { recognition.stop(); } 
         else {
-            isRecording = true;
-            shadowBtn.textContent = '🛑';
-            exampleTextDOM.innerHTML = `<strong>🔴 [녹음 중]</strong> 원어민 발음을 듣고 따라 말한 뒤 🛑 버튼을 누르세요!`;
+            isRecording = true; shadowBtn.textContent = '🛑';
             speakText(currentExampleEng);
             setTimeout(() => recognition.start(), 500);
         }
@@ -582,46 +705,31 @@
     function resetShadowBtn() { isRecording = false; shadowBtn.textContent = '🎙'; }
 
     function analyzeSpeech(userText) {
-        const cleanTarget = currentExampleEng.toLowerCase().replace(/[^a-z0-9 ]/g, '');
-        const cleanUser = userText.toLowerCase().replace(/[^a-z0-9 ]/g, '');
-        let ratio = getSimilarity(cleanTarget, cleanUser);
-        let score = Math.round(ratio * 100);
-        let msg = score >= 80 ? `🎉 완벽해요! (일치율: ${score}%)\n\n[내 발음]\n${userText}` : `💪 조금 더 연습해봐요! (일치율: ${score}%)\n\n[내 발음]\n${userText}`;
-        alert(msg);
-        fetchExample(currentWord.eng); 
-    }
-
-    function getSimilarity(s1, s2) {
-        let longer = s1, shorter = s2;
-        if (s1.length < s2.length) { longer = s2; shorter = s1; }
-        let longerLength = longer.length;
-        if (longerLength == 0) return 1.0;
-        let editDistance = getEditDistance(longer, shorter);
-        return (longerLength - editDistance) / parseFloat(longerLength);
-    }
-    function getEditDistance(s1, s2) {
-        let costs = [];
-        for (let i = 0; i <= s1.length; i++) {
-            let lastValue = i;
-            for (let j = 0; j <= s2.length; j++) {
-                if (i == 0) costs[j] = j;
-                else {
-                    if (j > 0) {
-                        let newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) != s2.charAt(j - 1)) newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;
-                        costs[j - 1] = lastValue; lastValue = newValue;
+        const cleanT = currentExampleEng.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+        const cleanU = userText.toLowerCase().replace(/[^a-z0-9 ]/g, '');
+        let editDist = (s1, s2) => {
+            let costs = [];
+            for (let i=0; i<=s1.length; i++) {
+                let last = i;
+                for (let j=0; j<=s2.length; j++) {
+                    if (i==0) costs[j] = j;
+                    else if (j>0) {
+                        let val = costs[j-1];
+                        if (s1[i-1] != s2[j-1]) val = Math.min(Math.min(val, last), costs[j]) + 1;
+                        costs[j-1] = last; last = val;
                     }
                 }
+                if (i>0) costs[s2.length] = last;
             }
-            if (i > 0) costs[s2.length] = lastValue;
-        }
-        return costs[s2.length];
+            return costs[s2.length];
+        };
+        let ratio = (Math.max(cleanT.length, cleanU.length) - editDist(cleanT, cleanU)) / Math.max(cleanT.length, cleanU.length);
+        let score = Math.round(ratio * 100);
+        alert(score >= 80 ? `🎉 완벽해요! (${score}%)` : `💪 연습이 더 필요해요! (${score}%)`);
     }
 
-    // 시작
+    window.onclick = (e) => { if (e.target === document.getElementById('reviewModal')) closeReviewModal(); }
     resetAndLoad();
-
 </script>
 </body>
 </html>
-
